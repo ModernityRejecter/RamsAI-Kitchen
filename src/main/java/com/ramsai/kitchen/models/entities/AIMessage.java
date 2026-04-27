@@ -1,4 +1,4 @@
-package com.ramsai.kitchen.model;
+package com.ramsai.kitchen.models.entities;
 
 import com.ramsai.kitchen.enums.SenderType;
 import jakarta.persistence.*;
