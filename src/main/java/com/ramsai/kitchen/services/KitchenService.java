@@ -1,6 +1,7 @@
 package com.ramsai.kitchen.services;
 
 import com.ramsai.kitchen.enums.ItemStatus;
+import com.ramsai.kitchen.exceptions.ResourceNotFoundException;
 import com.ramsai.kitchen.models.entities.OrderItem;
 import com.ramsai.kitchen.models.entities.Product;
 import com.ramsai.kitchen.repositories.OrderItemRepository;
@@ -33,18 +34,20 @@ public class KitchenService {
 
     @Transactional
     public void updateItemStatus(Long itemId, ItemStatus newStatus) {
+        log.info("Attempting to update status for Item {} to {}", itemId, newStatus);
         OrderItem item = orderItemRepository.findById(itemId)
-                .orElseThrow(() -> new RuntimeException("OrderItem not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("OrderItem not found with id: " + itemId));
 
         ItemStatus oldStatus = item.getItemStatus();
         item.setItemStatus(newStatus);
         orderItemRepository.save(item);
 
-        log.info("Updated Item {} status from {} to {}", itemId, oldStatus, newStatus);
+        log.info("Successfully updated Item {} status from {} to {}", itemId, oldStatus, newStatus);
 
         if (newStatus == ItemStatus.COOKING && oldStatus != ItemStatus.COOKING) {
+            log.info("Item {} moved to COOKING. Triggering inventory deduction.", itemId);
             Product product = productRepository.findById(item.getProductId())
-                    .orElseThrow(() -> new RuntimeException("Product not found"));
+                    .orElseThrow(() -> new ResourceNotFoundException("Product not found with id: " + item.getProductId()));
             inventoryService.deductStockForProduct(product, item.getQuantity());
         }
     }
