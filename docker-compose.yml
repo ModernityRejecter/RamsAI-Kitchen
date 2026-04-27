@@ -1,0 +1,14 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15
+    container_name: ramsai-kitchen-db
+    environment:
+      POSTGRES_USER: ramsai
+      POSTGRES_PASSWORD: kitchen_password
+      POSTGRES_DB: ramsai_kitchen
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./src/main/resources/sql/schema.sql:/docker-entrypoint-initdb.d/schema.sql
