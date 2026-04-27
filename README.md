@@ -1,56 +1,56 @@
 ## User Stories & Acceptance Criteria
 
-### 1. Vizualizare Meniu
-**Ca si client**, vreau sa pot sa vad meniul online, ca sa pot sa caut rapid produsele pe care vreau sa le comand.
+### 1. Menu Access
+**As a client**, I want to be able to view the menu online so that I can quickly search for the products I want to order.
 
-### 2. Comandă Directă
-**Ca și client**, vreau să pot să comand direct de pe o interfata web, astfel încât să nu mai aștept după un ospătar în momentele aglomerate.
+### 2. Web Ordering
+**As a client**, I want to be able to order directly from a web interface so that I don't have to wait for a waiter during busy times.
 
-### 3. Personalizare Comandă (Alergii)
-**Ca persoană cu alergii**, vreau să pot adăuga mențiuni la comandă (ex: „fără alune”), astfel încât mâncarea să fie pregătită conform nevoilor mele.
+### 3. Dietary Requirements
+**As a person with allergies**, I want to be able to add notes to my order (e.g., "no peanuts") so that the food is prepared according to my needs.
 
-### 4. Oferte Speciale
-**Ca și client**, vreau să pot vedea produsele marcate cu „Reducere” sau „Ofertă specială” direct în meniul online, astfel încât să pot alege preparatele cu cel mai bun raport calitate-preț.
+### 4. Special Offers
+**As a client**, I want to see products marked with "Discount" or "Special Offer" directly in the online menu so that I can choose the best value-for-money dishes.
 
-### 5. Gestiune Bucătărie
-**Ca bucătar**, vreau să primesc comenzile instantaneu pe un ecran, astfel încât să optimizez fluxul de gătire.
+### 5. Kitchen Management
+**As a chef**, I want to receive orders instantaneously on a screen so that I can optimize the cooking workflow.
 * **Acceptance Criteria:**
-    * Comenzile sa fie ordonate dupa ordinea in care au fost plasate.
-    * Notele de personalizare ale clientului sa fie clar vizibile.
-    * Comenzile sa poata fi marcate ca si “In Progres” si “Gata”, astfel incat personalul de servire sau clientul sa fie notificati imediat.
+    * Orders must be sorted by the order in which they were placed.
+    * Customer customization notes must be clearly visible.
+    * Orders can be marked as "In Progress" and "Ready" so that service staff or the customer are notified immediately.
 
-### 6. Notificări Status
-**Ca om fără răbdare**, vreau să primesc notificări în timp real despre statusul comenzii mele (Preluată / Se gătește / Gata de servire), astfel încât să știu exact cât mai am de așteptat.
+### 6. Live Status
+**As an impatient person**, I want to receive real-time notifications about my order status (Received / Cooking / Ready to serve) so that I know exactly how much longer I have to wait.
 
-### 7. Recenzii Produse
-**Ca client**, vreau să pot lăsa o recenzie și o notă preparatelor consumate, astfel încât să ofer feedback restaurantului despre calitatea serviciilor.
+### 7. Feedback System
+**As a client**, I want to be able to leave a review and a rating for the dishes I consumed so that I can provide feedback to the restaurant regarding service quality.
 
-### 8. Vizualizare Status Mese
-**Ca și ospătar**, vreau să pot vizualiza statusul tuturor meselor pe o hartă digitală a restaurantului, astfel încât să știu care mese sunt libere, ocupate sau așteaptă nota.
+### 8. Table Mapping
+**As a waiter**, I want to be able to view the status of all tables on a digital map of the restaurant so that I know which tables are free, occupied, or waiting for the bill.
 * **Acceptance Criteria:**
-    * Mesele să fie colorate diferit în funcție de status (ex: Verde - Liber, Roșu - Ocupat, Galben - Notă solicitată).
-    * Sistemul să permită alocarea unui client la o masă specifică prin simplul click pe aceasta.
-    * Afișarea timpului scurs de la ultima comandă pe fiecare masă ocupată.
+    * Tables must be colored differently based on status (e.g., Green - Free, Red - Occupied, Yellow - Bill Requested).
+    * The system must allow assigning a customer to a specific table simply by clicking on it.
+    * Display the time elapsed since the last order for each occupied table.
 
-### 9. Asistent AI Bucătărie
-**Ca chef fără inspirație**, vreau să am un asistent AI care sa ma ajute in bucatarie, ca sa ma economisesc timp pentru taskurile zilnice.
+### 9. AI Kitchen Assistant
+**As an uninspired chef**, I want an AI assistant to help me in the kitchen so that I can save time on daily tasks.
 * **Acceptance Criteria:**
-    * Sa existe o interfata de comunicare in timp real cu asistentul.
-    * Sa ma poata ajuta la crearea retetelor noi, in functie de cele mai populare produse.
-    * Sa am un istoric al conversatiilor.
+    * There must be a real-time communication interface with the assistant.
+    * It should be able to help create new recipes based on the most popular products.
+    * There must be a conversation history.
 
-### 10. Aprobare Produse
-**Ca manager**, vreau sa pot aproba sau respinge produsele propuse de bucatar, acestea ajungand direct in meniul online in urma aprobarii.
-
-### 11. Raportare Managerială
-**Ca manager**, vreau să am acces la un raport al produselor cumpărate de clienți.
+### 10. Sales Reporting
+**As a manager**, I want access to a report of products purchased by customers.
 * **Acceptance Criteria:**
-    * Raportul sa contina produsele separate pe categorii, sortate in functie de popularitatea lor in restaurant.
-    * Raportul sa contina si nota medie a recenziilor pentru fiecare produs.
-    * Raportul să fie generat în mai puțin de 2 minute și să fie prezentat sub formă de dashboard vizual (grafice/tabele), nu doar text brut.
+    * The report should contain products separated by category, sorted by their popularity in the restaurant.
+    * The report should include the average review rating for each product.
+    * The report must be generated in less than 2 minutes and presented as a visual dashboard (charts/tables), not just raw text.
 
-### 12. Scădere Automată Stoc
-**Ca manager**, vreau ca sistemul să scadă automat ingredientele din stoc la fiecare comandă finalizată, astfel încât să am o evidență reală a inventarului.
+### 11. Menu Approval
+**As a manager**, I want to be able to approve or reject products proposed by the chef, with these being added directly to the online menu upon approval.
 
-### 13. Control Meniu Digital
-**Ca manager**, vreau să pot activa sau dezactiva produse din meniul digital în timp real, astfel încât clienții să nu poată comanda preparate ale căror ingrediente s-au epuizat.
+### 12. Inventory Automation
+**As a manager**, I want the system to automatically deduct ingredients from the stock for every finalized order so that I have an accurate inventory record.
+
+### 13. Real-time Menu Control
+**As a manager**, I want to be able to activate or deactivate products in the digital menu in real-time so that customers cannot order dishes whose ingredients have run out.
