@@ -22,14 +22,14 @@ public class Product {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @NotBlank
+    @NotBlank(message = "Product name is required")
     @Column(nullable = false)
     private String name;
 
     private String description;
 
-    @NotNull
-    @Positive
+    @NotNull(message = "Base price is required")
+    @Positive(message = "Base price must be positive")
     @Column(nullable = false)
     private BigDecimal basePrice;
 

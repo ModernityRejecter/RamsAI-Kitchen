@@ -21,16 +21,16 @@ public class Ingredient {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @NotBlank
+    @NotBlank(message = "Ingredient name is required")
     @Column(nullable = false, unique = true)
     private String name;
 
-    @NotBlank
+    @NotBlank(message = "Unit is required")
     @Column(nullable = false)
     private String unit; // e.g., g, ml, pcs
 
-    @NotNull
-    @PositiveOrZero
+    @NotNull(message = "Current stock is required")
+    @PositiveOrZero(message = "Current stock cannot be negative")
     @Column(nullable = false)
     private Double currentStock;
 
