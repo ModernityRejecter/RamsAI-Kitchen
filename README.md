@@ -1,3 +1,40 @@
+# Ramsai Kitchen
+
+Digital restaurant management system built with Spring Boot and PostgreSQL.
+
+## Quick Start Tutorial
+
+### Prerequisites
+- Docker and Docker Compose installed on your machine.
+
+### First-Time Running the Project
+1. **Clone the repository**:
+   ```bash
+   git clone <repository-url>
+   cd RamsAI-Kitchen
+   ```
+
+2. **Start the application**:
+   Use Docker Compose to build and start both the database and the application:
+   ```bash
+   docker compose up --build
+   ```
+   The application will be available at [http://localhost:8080](http://localhost:8080).
+
+### Development with Docker Compose Watch
+For a faster development loop, this project supports `docker compose watch`. This allows you to see your changes in real-time without manually rebuilding the containers.
+
+1. **Run in watch mode**:
+   ```bash
+   docker compose watch
+   ```
+
+2. **What happens during watch?**:
+   - **Static Files**: Any changes in `src/main/resources/static` will be automatically synced to the running container.
+   - **Java Code & Dependencies**: Any changes in `src/` or `pom.xml` will trigger an automatic rebuild and restart of the application container, ensuring your backend changes are reflected immediately.
+
+---
+
 ## User Stories & Acceptance Criteria
 
 ### 1. Menu Access
