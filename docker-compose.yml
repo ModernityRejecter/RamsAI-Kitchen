@@ -5,18 +5,30 @@ services:
     image: postgres:15
     container_name: ramsai-kitchen-db
     environment:
-      POSTGRES_USER: ramsai
-      POSTGRES_PASSWORD: kitchen_password
-      POSTGRES_DB: ramsai_kitchen
+      # Use variables here
+      POSTGRES_USER: ${DATABASE_USERNAME}
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
+      POSTGRES_DB: ${DATABASE_NAME}
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ramsai -d ramsai_kitchen"]
+      # Note: Use the variable for the user and db name in the healthcheck too
+      test: ["CMD-SHELL", "pg_isready -U ${DATABASE_USERNAME} -d ${DATABASE_NAME}"]
       interval: 5s
       timeout: 5s
       retries: 5
+
+  pgadmin:
+    image: dpage/pgadmin4
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=${PGADMIN_EMAIL}
+      - PGADMIN_DEFAULT_PASSWORD=${PGADMIN_PASSWORD}
+    ports:
+      - "8888:80"
+    depends_on:
+      - db
 
   app:
     build: .
@@ -24,22 +36,12 @@ services:
     ports:
       - "8080:8080"
     environment:
-      - SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/ramsai_kitchen
-      - SPRING_DATASOURCE_USERNAME=ramsai
-      - SPRING_DATASOURCE_PASSWORD=kitchen_password
+      # Inject variables into Spring Boot
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/${DATABASE_NAME}
+      - SPRING_DATASOURCE_USERNAME=${DATABASE_USERNAME}
+      - SPRING_DATASOURCE_PASSWORD=${DATABASE_PASSWORD}
       - SPRING_JPA_HIBERNATE_DDL_AUTO=validate
     depends_on:
       db:
         condition: service_healthy
-    develop:
-      watch:
-        - path: ./src/main/resources/static
-          action: sync
-          target: /app/resources/static
-        - path: ./pom.xml
-          action: rebuild
-        - path: ./src
-          action: rebuild
-
-volumes:
-  postgres_data:
+    # ... rest of your develop/watch config
