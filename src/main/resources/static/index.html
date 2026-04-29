@@ -3,38 +3,78 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ramsai Kitchen</title>
-    <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
-            background-color: #f4f7f6;
-            color: #333;
-        }
-        .container {
-            text-align: center;
-            padding: 2rem;
-            background: white;
-            border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        }
-        h1 {
-            color: #2c3e50;
-        }
-        p {
-            color: #7f8c8d;
-        }
-    </style>
+    <title>Ramsai Kitchen | Modern Restaurant Management</title>
+    <link rel="stylesheet" href="css/style.css">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;800&display=swap" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
-    <div class="container">
-        <h1>Welcome to Ramsai Kitchen</h1>
-        <p>Hello World! Your Spring Boot application is running in Docker.
-            MODIFICARE MODIFICARE</p>
-    </div>
+
+    <header>
+        <div class="logo">Rams-AI <span>Kitchen</span></div>
+        <nav>
+            <ul>
+                <li><a href="#home">Home</a></li>
+                <li><a href="#features">Features</a></li>
+                <li><a href="/api/v1/kitchen/status">Kitchen Status</a></li>
+                <li><a href="/api/v1/tables">Table Map</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <section class="hero" id="home">
+        <h1>Savor the Digital Transformation</h1>
+        <p>A real-time restaurant management ecosystem designed for speed, precision, and the ultimate dining experience.</p>
+        <a href="#features" class="cta-button">Explore Features</a>
+    </section>
+
+    <section class="features" id="features">
+        <div class="section-title">
+            <h2>Our Ecosystem</h2>
+            <p>Empowering every role in your restaurant.</p>
+            <div class="underline"></div>
+        </div>
+
+        <div class="feature-grid">
+            <div class="feature-card">
+                <i class="fas fa-mobile-alt feature-icon"></i>
+                <h3>Smart Ordering</h3>
+                <p>Digital menus with real-time tracking for customers. Order directly from the table with ease.</p>
+            </div>
+
+            <div class="feature-card">
+                <i class="fas fa-fire feature-icon"></i>
+                <h3>Kitchen Display (KDS)</h3>
+                <p>Streamlined workflow for chefs. Real-time order queue and priority management to eliminate delays.</p>
+            </div>
+
+            <div class="feature-card">
+                <i class="fas fa-chair feature-icon"></i>
+                <h3>Waitstaff Control</h3>
+                <p>Interactive table maps and status updates. Know exactly when a table needs attention or is ready to flip.</p>
+            </div>
+
+            <div class="feature-card">
+                <i class="fas fa-chart-line feature-icon"></i>
+                <h3>Manager Dashboard</h3>
+                <p>Deep insights into inventory, sales, and performance. Data-driven decisions for a thriving business.</p>
+            </div>
+        </div>
+    </section>
+
+    <footer>
+        <div class="footer-content">
+            <div class="footer-logo">RamsAI <span>Kitchen</span></div>
+            <p>Crafted for the modern culinary industry.</p>
+        </div>
+        <div class="copyright">
+            &copy; 2026 Ramsai Kitchen Project. Built with Spring Boot & Docker.
+        </div>
+    </footer>
+
 </body>
 </html>
