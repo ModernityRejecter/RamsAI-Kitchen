@@ -44,4 +44,14 @@ services:
     depends_on:
       db:
         condition: service_healthy
-    # ... rest of your develop/watch config
+    develop:
+      watch:
+        - path: ./src/main/resources/static
+          action: sync
+          target: /app/resources/static
+        - path: ./pom.xml
+          action: rebuild
+        - path: ./src
+          action: rebuild
+volumes:
+  postgres_data:
