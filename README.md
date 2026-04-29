@@ -100,3 +100,5 @@ This project includes **pgAdmin** to help you manage the PostgreSQL database thr
 
 ### 13. Real-time Menu Control
 **As a manager**, I want to be able to activate or deactivate products in the digital menu in real-time so that customers cannot order dishes whose ingredients have run out.
+
+.
