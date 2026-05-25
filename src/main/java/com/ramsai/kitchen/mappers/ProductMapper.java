@@ -1,0 +1,14 @@
+package com.ramsai.kitchen.mappers;
+
+import com.ramsai.kitchen.models.dtos.ProductResponse;
+import com.ramsai.kitchen.models.entities.Product;
+import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
+
+@Mapper(componentModel = "spring")
+public interface ProductMapper {
+
+    @Mapping(target = "categoryName", source = "category.name")
+    @Mapping(target = "categoryId", source = "category.id")
+    ProductResponse toResponse(Product product);
+}
