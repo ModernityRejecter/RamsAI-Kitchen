@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile Dashboard - RamsAI Kitchen</title>
+    <link rel="stylesheet" href="css/style.css">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+        .profile-wrapper {
+            max-width: 1000px;
+            margin: 120px auto 60px;
+            padding: 0 20px;
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            gap: 30px;
+        }
+        @media (max-width: 768px) {
+            .profile-wrapper {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        /* Sidebar/Header Card */
+        .profile-sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        .user-card {
+            background: var(--white);
+            border-radius: 20px;
+            padding: 30px;
+            text-align: center;
+            box-shadow: var(--shadow);
+            position: relative;
+        }
+        .avatar-container {
+            width: 100px;
+            height: 100px;
+            background: var(--primary-color);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin: 0 auto 20px;
+            box-shadow: 0 10px 20px rgba(243, 156, 18, 0.2);
+            overflow: hidden;
+            position: relative;
+            cursor: pointer;
+        }
+        .avatar-container img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .avatar-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 0.8rem;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .avatar-container:hover .avatar-overlay {
+            opacity: 1;
+        }
+        .user-card h3 {
+            color: var(--secondary-color);
+            font-size: 1.5rem;
+            margin-bottom: 5px;
+        }
+        .user-card .role-label {
+            display: inline-block;
+            background: var(--bg-light);
+            color: var(--text-muted);
+            padding: 4px 12px;
+            border-radius: 50px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* Content Area */
+        .profile-content {
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+        }
+        .content-card {
+            background: var(--white);
+            border-radius: 20px;
+            padding: 35px;
+            box-shadow: var(--shadow);
+        }
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid var(--bg-light);
+        }
+        .card-header i {
+            color: var(--primary-color);
+            font-size: 1.2rem;
+        }
+        .card-header h2 {
+            font-size: 1.25rem;
+            color: var(--secondary-color);
+            font-weight: 700;
+        }
+
+        /* Detail Items */
+        .details-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 25px;
+        }
+        .detail-item {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        .detail-label {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+        }
+        .detail-value {
+            font-size: 1rem;
+            color: var(--secondary-color);
+            font-weight: 500;
+        }
+        
+        /* Status Badges */
+        .status-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 12px;
+            border-radius: 50px;
+            font-size: 0.75rem;
+            font-weight: 700;
+        }
+        .status-pill.verified { background: #e8faf0; color: #2ecc71; }
+        .status-pill.unverified { background: #fff8e6; color: #f39c12; }
+
+        /* Buttons & Forms */
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        @media (max-width: 600px) {
+            .form-grid { grid-template-columns: 1fr; }
+        }
+        .action-btn {
+            padding: 12px 24px;
+            border-radius: 10px;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        .btn-update { background: var(--primary-color); color: white; }
+        .btn-update:hover { background: var(--accent-color); transform: translateY(-2px); }
+        .btn-verify { background: var(--secondary-color); color: white; margin-top: 20px; width: 100%; }
+        .btn-deactivate { background: #fee2e2; color: #dc2626; margin-top: 15px; }
+        .btn-deactivate:hover { background: #fecaca; }
+
+        .danger-zone {
+            background: #fff5f5;
+            border: 1px solid #feb2b2;
+        }
+        .danger-zone h2 { color: #c53030; }
+        .danger-zone .card-header i { color: #c53030; }
+
+        /* Enhanced Input Groups */
+        .input-group-custom {
+            position: relative;
+            margin-top: 8px;
+        }
+        .input-group-custom i {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+            transition: color 0.3s;
+        }
+        .input-group-custom input {
+            width: 100%;
+            padding: 14px 15px 14px 45px;
+            border: 2px solid #edf2f7;
+            border-radius: 12px;
+            font-size: 0.95rem;
+            transition: all 0.3s;
+            background: #fcfcfc;
+        }
+        .input-group-custom input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            background: white;
+            box-shadow: 0 0 0 4px rgba(243, 156, 18, 0.1);
+        }
+        .input-group-custom input:focus + i {
+            color: var(--primary-color);
+        }
+        .form-group label {
+            font-weight: 700;
+            font-size: 0.85rem;
+            color: var(--secondary-color);
+            margin-bottom: 10px;
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo">Rams-AI <span>Kitchen</span></div>
+        <nav><ul id="mainNav"></ul></nav>
+    </header>
+
+    <div class="profile-wrapper">
+        <!-- Sidebar -->
+        <aside class="profile-sidebar">
+            <div class="user-card">
+                <input type="file" id="profilePicInput" style="display: none;" accept="image/*">
+                <div class="avatar-container" id="avatarContainer" title="Click to change profile picture">
+                    <div id="avatarDisplay" style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;">?</div>
+                    <div class="avatar-overlay">
+                        <i class="fas fa-camera"></i>
+                    </div>
+                </div>
+                <h3 id="sideUsername">---</h3>
+                <span class="role-label" id="sideRole">---</span>
+                <div id="verifyActionContainer"></div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="profile-content">
+            <!-- Account Info -->
+            <section class="content-card">
+                <div class="card-header">
+                    <i class="fas fa-user-circle"></i>
+                    <h2>Account Information</h2>
+                </div>
+                <div class="details-grid">
+                    <div class="detail-item">
+                        <span class="detail-label">Username</span>
+                        <span class="detail-value" id="dispUsername">---</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Email Status</span>
+                        <div id="statusPillContainer">
+                            <span class="status-pill unverified"><i class="fas fa-clock"></i> Checking...</span>
+                        </div>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Email Address</span>
+                        <span class="detail-value" id="dispEmail">---</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Member Since</span>
+                        <span class="detail-value" id="dispJoinDate">---</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Security Settings -->
+            <section class="content-card">
+                <div class="card-header">
+                    <i class="fas fa-shield-alt"></i>
+                    <h2>Security Settings</h2>
+                </div>
+                <form id="updateProfileForm">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Change Email Address</label>
+                            <div class="input-group-custom">
+                                <input type="email" name="newEmail" placeholder="e.g. new@example.com">
+                                <i class="fas fa-envelope"></i>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Change Password</label>
+                            <div class="input-group-custom">
+                                <input type="password" name="newPassword" placeholder="New strong password">
+                                <i class="fas fa-lock"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <div style="margin-top: 30px;">
+                        <button type="submit" class="action-btn btn-update">
+                            <i class="fas fa-check-circle"></i> Update My Profile
+                        </button>
+                    </div>
+                </form>
+            </section>
+
+            <!-- Danger Zone -->
+            <section class="content-card danger-zone">
+                <div class="card-header">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <h2>Danger Zone</h2>
+                </div>
+                <p style="color: #744242; font-size: 0.95rem;">Once you deactivate your account, you will no longer be able to access your orders, reviews, or chat history. This action can only be reversed by a system administrator.</p>
+                <button id="deactivateBtn" class="action-btn btn-deactivate">
+                    <i class="fas fa-user-slash"></i> Deactivate My Account
+                </button>
+            </section>
+        </main>
+    </div>
+
+    <script src="js/auth.js"></script>
+    <script>
+        async function loadProfile() {
+            const response = await authenticatedFetch('/api/v1/user/me');
+            if (response.ok) {
+                const result = await response.json();
+                const user = result.data;
+                
+                // Sidebar
+                document.getElementById('sideUsername').textContent = user.username;
+                document.getElementById('sideRole').textContent = user.role;
+                
+                const avatarDisplay = document.getElementById('avatarDisplay');
+                if (user.profilePictureUrl) {
+                    avatarDisplay.innerHTML = `<img src="${user.profilePictureUrl}" alt="Profile">`;
+                } else {
+                    avatarDisplay.textContent = user.username.charAt(0).toUpperCase();
+                }
+                
+                // Account Details
+                document.getElementById('dispUsername').textContent = user.username;
+                document.getElementById('dispEmail').textContent = user.email;
+                
+                // Join Date Formatting
+                const joinDate = new Date(user.createdAt);
+                document.getElementById('dispJoinDate').textContent = joinDate.toLocaleDateString('en-US', {
+                    year: 'numeric', month: 'long', day: 'numeric'
+                });
+                
+                // Verification Status
+                const pillContainer = document.getElementById('statusPillContainer');
+                const actionContainer = document.getElementById('verifyActionContainer');
+                
+                if (user.isEmailVerified) {
+                    pillContainer.innerHTML = `<span class="status-pill verified"><i class="fas fa-check-circle"></i> Verified</span>`;
+                    actionContainer.innerHTML = "";
+                } else {
+                    pillContainer.innerHTML = `<span class="status-pill unverified"><i class="fas fa-exclamation-circle"></i> Unverified</span>`;
+                    actionContainer.innerHTML = `
+                        <button onclick="requestVerification()" class="action-btn btn-verify">
+                            <i class="fas fa-paper-plane"></i> Verify Email
+                        </button>`;
+                }
+            } else {
+                window.location.href = 'login.html';
+            }
+        }
+
+        async function requestVerification() {
+            const response = await authenticatedFetch('/api/v1/user/verify-email/request', { method: 'POST' });
+            if (response.ok) {
+                alert('Verification email sent! Check the application console for the link.');
+            } else {
+                const res = await response.json();
+                alert('Error: ' + res.message);
+            }
+        }
+
+        document.getElementById('updateProfileForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = e.target.newEmail.value;
+            const password = e.target.newPassword.value;
+            
+            if (!email && !password) {
+                alert('Please fill at least one field to update.');
+                return;
+            }
+            
+            const response = await authenticatedFetch('/api/v1/user/profile', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, password })
+            });
+
+            if (response.ok) {
+                alert('Profile updated successfully!');
+                e.target.reset();
+                loadProfile(); // Refresh data
+            } else {
+                const res = await response.json();
+                alert('Update failed: ' + res.message);
+            }
+        });
+
+        document.getElementById('deactivateBtn').addEventListener('click', async () => {
+            if (confirm('Are you sure you want to deactivate your account? You will be logged out immediately.')) {
+                const response = await authenticatedFetch('/api/v1/user/account', { method: 'DELETE' });
+                if (response.ok) {
+                    localStorage.clear();
+                    sessionStorage.clear();
+                    window.location.href = 'index.html';
+                }
+            }
+        });
+
+        // Profile Picture Upload Logic
+        const avatarContainer = document.getElementById('avatarContainer');
+        const fileInput = document.getElementById('profilePicInput');
+
+        avatarContainer.addEventListener('click', () => fileInput.click());
+
+        fileInput.addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            try {
+                const response = await authenticatedFetch('/api/v1/user/profile-picture', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    alert('Profile picture updated!');
+                    loadProfile(); // Refresh UI
+                } else {
+                    alert('Failed to upload image.');
+                }
+            } catch (error) {
+                console.error('Error uploading profile picture:', error);
+                alert('An error occurred during upload.');
+            }
+        });
+
+        document.addEventListener('DOMContentLoaded', loadProfile);
+    </script>
+</body>
+</html>

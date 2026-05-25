@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Security Audit Logs - RamsAI Kitchen</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .audit-container {
+            max-width: 1200px;
+            margin: 120px auto 40px;
+            padding: 0 20px;
+        }
+        .audit-card {
+            background: var(--white);
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: var(--shadow);
+        }
+        .audit-card h2 {
+            margin-bottom: 25px;
+            color: var(--secondary-color);
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            text-align: left;
+            padding: 12px 15px;
+            border-bottom: 1px solid var(--bg-light);
+        }
+        th {
+            background: var(--bg-light);
+            color: var(--secondary-color);
+            font-weight: 600;
+        }
+        .status-success { color: #2ecc71; font-weight: 600; }
+        .status-failure { color: #e74c3c; font-weight: 600; }
+        .timestamp { font-size: 0.85rem; color: var(--text-muted); }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo">RamsAI<span>Kitchen</span></div>
+        <nav><ul id="mainNav"></ul></nav>
+    </header>
+
+    <div class="audit-container">
+        <div class="audit-card">
+            <h2>Security Audit Logs</h2>
+            <p style="color: var(--text-muted); margin-bottom: 20px;">Review recent security actions and login attempts.</p>
+            <div style="overflow-x: auto;">
+                <table id="auditTable">
+                    <thead>
+                        <tr>
+                            <th>Timestamp</th>
+                            <th>Username</th>
+                            <th>Action</th>
+                            <th>Status</th>
+                            <th>IP Address</th>
+                            <th>Details</th>
+                        </tr>
+                    </thead>
+                    <tbody id="auditBody">
+                        <!-- Data will be loaded here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/auth.js"></script>
+    <script>
+        async function loadAuditLogs() {
+            const response = await authenticatedFetch('/api/v1/manager/audit?page=0&size=50');
+            
+            if (response.ok) {
+                const result = await response.json();
+                const logs = result.data;
+                const body = document.getElementById('auditBody');
+                
+                if (logs.length === 0) {
+                    body.innerHTML = '<tr><td colspan="6" style="text-align:center;">No logs found.</td></tr>';
+                    return;
+                }
+
+                body.innerHTML = logs.map(log => `
+                    <tr>
+                        <td class="timestamp">${new Date(log.timestamp).toLocaleString()}</td>
+                        <td>${log.username || (log.user ? log.user.username : '---')}</td>
+                        <td>${log.action}</td>
+                        <td class="${log.status === 'SUCCESS' ? 'status-success' : 'status-failure'}">${log.status}</td>
+                        <td>${log.ipAddress || '---'}</td>
+                        <td>${log.details || '---'}</td>
+                    </tr>
+                `).join('');
+            } else {
+                alert('Failed to load logs. You might not have permission.');
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const role = getStorage().getItem('role');
+            if (role !== 'MANAGER') {
+                window.location.href = 'index.html';
+                return;
+            }
+            loadAuditLogs();
+        });
+    </script>
+</body>
+</html>

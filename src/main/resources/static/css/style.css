@@ -208,6 +208,13 @@ footer {
     opacity: 0.6;
 }
 
+.field-error {
+    color: #e74c3c;
+    font-size: 0.75rem;
+    margin-top: 5px;
+    height: 15px; /* Prevent layout shift */
+}
+
 /* Responsive */
 @media (max-width: 768px) {
     .hero h1 {
