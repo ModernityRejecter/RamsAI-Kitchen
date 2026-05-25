@@ -1,8 +1,8 @@
 package com.ramsai.kitchen.controllers;
 
-import com.ramsai.kitchen.models.dtos.TableResponse;
+import com.ramsai.kitchen.models.dtos.WallResponse;
 import com.ramsai.kitchen.models.dtos.UpdateTablePositionRequest;
-import com.ramsai.kitchen.services.TableService;
+import com.ramsai.kitchen.services.WallService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -12,15 +12,15 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api/v1/tables")
+@RequestMapping("/api/v1/walls")
 @RequiredArgsConstructor
-public class TableController {
+public class WallController {
 
-    private final TableService tableService;
+    private final WallService wallService;
 
-    @GetMapping("/map")
-    public ResponseEntity<Map<String, Object>> getTableMap() {
-        List<TableResponse> data = tableService.getAllTablesWithLastOrderTime();
+    @GetMapping
+    public ResponseEntity<Map<String, Object>> getAllWalls() {
+        List<WallResponse> data = wallService.getAllWalls();
         return ResponseEntity.ok(Map.of(
                 "data", data,
                 "message", "Success"
@@ -28,22 +28,22 @@ public class TableController {
     }
 
     @PostMapping
-    public ResponseEntity<Map<String, Object>> addTable() {
-        TableResponse data = tableService.addTable();
+    public ResponseEntity<Map<String, Object>> addWall() {
+        WallResponse data = wallService.addWall();
         return ResponseEntity.ok(Map.of(
                 "data", data,
-                "message", "Table created successfully"
+                "message", "Wall created successfully"
         ));
     }
 
     @PutMapping("/{id}/position")
-    public ResponseEntity<Map<String, Object>> updateTablePosition(
+    public ResponseEntity<Map<String, Object>> updateWallPosition(
             @PathVariable Long id,
             @Valid @RequestBody UpdateTablePositionRequest request) {
-        TableResponse data = tableService.updateTablePosition(id, request.xPos(), request.yPos());
+        WallResponse data = wallService.updateWallPosition(id, request.xPos(), request.yPos());
         return ResponseEntity.ok(Map.of(
                 "data", data,
-                "message", "Table position updated successfully"
+                "message", "Wall position updated successfully"
         ));
     }
 }

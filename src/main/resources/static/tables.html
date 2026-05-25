@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ramsai Kitchen | Table Management</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .management-container {
+            padding: 120px 5% 50px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .floor-plan {
+            position: relative;
+            background-color: #f0f0f0;
+            border: 2px solid #ddd;
+            display: grid;
+            /* Grid size will be controlled by JS or fixed here */
+            grid-template-columns: repeat(15, 50px);
+            grid-template-rows: repeat(15, 50px);
+            gap: 1px;
+            background-image: linear-gradient(#ddd 1px, transparent 1px), linear-gradient(90deg, #ddd 1px, transparent 1px);
+            background-size: 51px 51px;
+            width: fit-content;
+            box-shadow: var(--shadow);
+            border-radius: 8px;
+            user-select: none;
+        }
+
+        .grid-cell {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        .restaurant-table {
+            width: 100%;
+            height: 100%;
+            box-sizing: border-box;
+            margin: 0;
+            background-color: var(--primary-color);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: move;
+            transition: transform 0.1s, box-shadow 0.1s, background-color 0.3s;
+            z-index: 10;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .restaurant-table:hover {
+            transform: scale(1.05);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+        }
+
+        .restaurant-table.dragging {
+            position: absolute;
+            width: 50px;
+            height: 50px;
+            opacity: 0.7;
+            z-index: 100;
+            transform: scale(1.1);
+        }
+
+        .restaurant-table.occupied {
+            background-color: #e74c3c;
+        }
+
+        .restaurant-table.ready {
+            background-color: #2ecc71;
+        }
+
+        .restaurant-wall {
+            width: 100%;
+            height: 100%;
+            box-sizing: border-box;
+            margin: 0;
+            background-color: #34495e;
+            border-radius: 4px;
+            cursor: move;
+            z-index: 5;
+            transition: transform 0.1s;
+        }
+
+        .restaurant-wall.dragging {
+            position: absolute;
+            width: 50px;
+            height: 50px;
+            opacity: 0.7;
+            z-index: 100;
+            transform: scale(1.1);
+        }
+
+        .controls {
+            margin-bottom: 20px;
+            display: flex;
+            gap: 15px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border-radius: 5px;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--accent-color);
+        }
+
+        #status-message {
+            margin-top: 15px;
+            font-weight: 500;
+            height: 24px;
+        }
+
+        .success { color: #27ae60; }
+        .error { color: #e74c3c; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="logo">Rams-AI <span>Kitchen</span></div>
+        <nav>
+            <ul id="mainNav">
+                <li><a href="index.html">Home</a></li>
+                <li><a href="tables.html" class="active">Tables</a></li>
+                <li><a href="audit.html">Audit</a></li>
+                <li><a href="profile.html">Profile</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main class="management-container">
+        <div class="section-title">
+            <h2>Floor Management</h2>
+            <p>Drag and drop tables to rearrange the restaurant layout.</p>
+            <div class="underline"></div>
+        </div>
+
+        <div class="controls">
+            <button id="save-layout" class="btn btn-primary" style="display:none;">Save Layout</button>
+            <button id="add-table" class="btn btn-primary">Add Table</button>
+            <button id="add-wall" class="btn btn-primary">Add Wall</button>
+            <button id="reset-grid" class="btn btn-primary" style="background-color: #e74c3c;">Reset Grid</button>
+        </div>
+
+        <div id="status-message"></div>
+
+        <div id="floor-plan" class="floor-plan">
+            <!-- Tables will be injected here -->
+        </div>
+    </main>
+
+    <footer>
+        <div class="copyright">
+            &copy; 2026 Ramsai Kitchen Project.
+        </div>
+    </footer>
+
+    <script src="js/auth.js"></script>
+    <script src="js/tables.js"></script>
+</body>
+</html>
