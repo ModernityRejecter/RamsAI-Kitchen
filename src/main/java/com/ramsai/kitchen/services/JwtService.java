@@ -23,6 +23,9 @@ public class JwtService {
     @Value("${application.security.jwt.expiration:86400000}")
     private long jwtExpiration;
 
+    @Value("${application.security.jwt.refresh-token.expiration:604800000}")
+    private long refreshExpiration;
+
     public String extractUsername(String token) {
         return extractClaim(token, Claims::getSubject);
     }

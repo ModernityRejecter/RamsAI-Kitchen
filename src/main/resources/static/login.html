@@ -108,7 +108,14 @@
                     <input type="password" id="password" name="password" required>
                     <div id="passwordError" class="field-error"></div>
                 </div>
+                <div class="form-group" style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px;">
+                    <input type="checkbox" id="rememberMe" name="rememberMe" style="width: auto;">
+                    <label for="rememberMe" style="margin-bottom: 0;">Remember Me</label>
+                </div>
                 <button type="submit" class="auth-button">Login</button>
+                <div style="text-align: right; margin-top: 10px;">
+                    <a href="#" id="forgotPasswordLink" style="font-size: 0.85rem; color: var(--primary-color); text-decoration: none;">Forgot Password?</a>
+                </div>
                 <div id="errorMessage" class="error-message"></div>
             </form>
             <div class="auth-footer">
@@ -123,6 +130,7 @@
             e.preventDefault();
             const username = e.target.username.value;
             const password = e.target.password.value;
+            const rememberMe = e.target.rememberMe.checked;
             const errorDiv = document.getElementById('errorMessage');
 
             try {
@@ -135,9 +143,11 @@
                 const result = await response.json();
 
                 if (response.ok) {
-                    localStorage.setItem('token', result.data.token);
-                    localStorage.setItem('username', result.data.username);
-                    localStorage.setItem('role', result.data.role);
+                    const storage = rememberMe ? localStorage : sessionStorage;
+                    storage.setItem('token', result.data.token);
+                    storage.setItem('refreshToken', result.data.refreshToken);
+                    storage.setItem('username', result.data.username);
+                    storage.setItem('role', result.data.role);
                     window.location.href = 'index.html';
                 } else {
                     errorDiv.textContent = result.message || 'Login failed';
@@ -147,6 +157,16 @@
                 errorDiv.textContent = 'An error occurred. Please try again.';
                 errorDiv.style.display = 'block';
             }
+        });
+
+        document.getElementById('forgotPasswordLink').addEventListener('click', async (e) => {
+            e.preventDefault();
+            const username = document.getElementById('username').value;
+            if (!username) {
+                alert('Please enter your username first to reset password.');
+                return;
+            }
+            alert('Feature coming soon: This will trigger a password reset request.');
         });
     </script>
 </body>

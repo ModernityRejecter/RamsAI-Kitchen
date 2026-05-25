@@ -38,4 +38,14 @@ public class AuthController {
                 "message", "Login successful"
         ));
     }
+
+    @PostMapping("/refresh")
+    public ResponseEntity<Map<String, Object>> refresh(@RequestBody Map<String, String> request) {
+        String refreshToken = request.get("refreshToken");
+        AuthenticationResponse response = authService.refreshToken(refreshToken);
+        return ResponseEntity.ok(Map.of(
+                "data", response,
+                "message", "Token refreshed successfully"
+        ));
+    }
 }

@@ -1,8 +1,11 @@
 // auth.js
+const getStorage = () => localStorage.getItem('token') ? localStorage : sessionStorage;
+
 function checkAuth() {
-    const token = localStorage.getItem('token');
-    const username = localStorage.getItem('username');
-    const role = localStorage.getItem('role');
+    const storage = getStorage();
+    const token = storage.getItem('token');
+    const username = storage.getItem('username');
+    const role = storage.getItem('role');
 
     if (!token && !window.location.pathname.endsWith('login.html') && !window.location.pathname.endsWith('register.html') && !window.location.pathname.endsWith('index.html')) {
         window.location.href = 'login.html';
@@ -14,6 +17,39 @@ function checkAuth() {
     }
 
     setupLiveValidation();
+}
+
+async function authenticatedFetch(url, options = {}) {
+    const storage = getStorage();
+    let token = storage.getItem('token');
+
+    if (!options.headers) options.headers = {};
+    options.headers['Authorization'] = `Bearer ${token}`;
+
+    let response = await fetch(url, options);
+
+    if (response.status === 401) {
+        const refreshToken = storage.getItem('refreshToken');
+        if (refreshToken) {
+            const refreshResponse = await fetch('/api/v1/auth/refresh', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ refreshToken })
+            });
+
+            if (refreshResponse.ok) {
+                const result = await refreshResponse.json();
+                storage.setItem('token', result.data.token);
+                options.headers['Authorization'] = `Bearer ${result.data.token}`;
+                return fetch(url, options);
+            }
+        }
+        localStorage.clear();
+        sessionStorage.clear();
+        window.location.href = 'login.html';
+    }
+
+    return response;
 }
 
 function setupLiveValidation() {
@@ -67,13 +103,17 @@ function setupLiveValidation() {
         const passwordInput = loginForm.password;
 
         usernameInput.addEventListener('input', () => {
-            document.getElementById('usernameError').textContent = 
-                usernameInput.value.trim() === '' ? 'Username is required' : '';
+            const errorDiv = document.getElementById('usernameError');
+            if (errorDiv) {
+                errorDiv.textContent = usernameInput.value.trim() === '' ? 'Username is required' : '';
+            }
         });
 
         passwordInput.addEventListener('input', () => {
-            document.getElementById('passwordError').textContent = 
-                passwordInput.value.trim() === '' ? 'Password is required' : '';
+            const errorDiv = document.getElementById('passwordError');
+            if (errorDiv) {
+                errorDiv.textContent = passwordInput.value.trim() === '' ? 'Password is required' : '';
+            }
         });
     }
 }
@@ -83,6 +123,8 @@ function updateUIForAuthenticatedUser(username, role) {
     if (navUl) {
         navUl.innerHTML = `
             <li><a href="index.html">Home</a></li>
+            <li><a href="profile.html">Profile</a></li>
+            ${role === 'MANAGER' ? '<li><a href="audit.html">Audit Logs</a></li>' : ''}
             ${role === 'MANAGER' ? '<li><a href="manager.html">Manager</a></li>' : ''}
             ${role === 'CHEF' || role === 'MANAGER' ? '<li><a href="kitchen.html">Kitchen</a></li>' : ''}
             ${role === 'WAITER' || role === 'MANAGER' ? '<li><a href="tables.html">Tables</a></li>' : ''}
@@ -92,6 +134,7 @@ function updateUIForAuthenticatedUser(username, role) {
         document.getElementById('logoutBtn').addEventListener('click', (e) => {
             e.preventDefault();
             localStorage.clear();
+            sessionStorage.clear();
             window.location.href = 'index.html';
         });
     }
