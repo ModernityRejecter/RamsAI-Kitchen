@@ -3,7 +3,145 @@ document.addEventListener('DOMContentLoaded', () => {
     loadDailySpecials();
     loadRecommended();
     loadProducts();
+    loadCart();
+    setupCartUI();
 });
+
+function setupCartUI() {
+    const cartToggle = document.getElementById('cartToggle');
+    const closeCart = document.getElementById('closeCart');
+    const cartSidebar = document.getElementById('cartSidebar');
+    const checkoutBtn = document.getElementById('checkoutBtn');
+
+    cartToggle.addEventListener('click', (e) => {
+        e.preventDefault();
+        cartSidebar.classList.add('open');
+    });
+
+    closeCart.addEventListener('click', () => {
+        cartSidebar.classList.remove('open');
+    });
+
+    checkoutBtn.addEventListener('click', checkout);
+}
+
+async function loadCart() {
+    const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+    if (!token) return;
+
+    try {
+        const response = await fetch('/api/v1/cart', {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const result = await response.json();
+        
+        if (response.ok) {
+            renderCart(result.data);
+        }
+    } catch (error) {
+        console.error('Error loading cart:', error);
+    }
+}
+
+function renderCart(cart) {
+    const cartItems = document.getElementById('cartItems');
+    const cartCount = document.getElementById('cartCount');
+    const cartTotalPrice = document.getElementById('cartTotalPrice');
+    
+    cartItems.innerHTML = '';
+    cartCount.textContent = cart.items.length;
+    cartTotalPrice.textContent = `$${cart.totalPrice.toFixed(2)}`;
+
+    if (cart.items.length === 0) {
+        cartItems.innerHTML = '<div class="empty-cart-msg">Your cart is empty.</div>';
+        return;
+    }
+
+    cart.items.forEach(item => {
+        const itemDiv = document.createElement('div');
+        itemDiv.className = 'cart-item';
+        itemDiv.innerHTML = `
+            <div class="cart-item-info">
+                <h4>${item.productName}</h4>
+                <p>${item.quantity} x $${item.unitPrice.toFixed(2)}</p>
+            </div>
+            <div class="cart-item-remove" onclick="removeFromCart(${item.id})">
+                <i class="fas fa-trash"></i>
+            </div>
+        `;
+        cartItems.appendChild(itemDiv);
+    });
+}
+
+async function addToCart(productId) {
+    const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+    if (!token) {
+        alert('Please login to add items to your cart.');
+        window.location.href = 'login.html';
+        return;
+    }
+
+    try {
+        const response = await fetch('/api/v1/cart/items', {
+            method: 'POST',
+            headers: { 
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ productId, quantity: 1 })
+        });
+        
+        if (response.ok) {
+            const result = await response.json();
+            renderCart(result.data);
+            document.getElementById('cartSidebar').classList.add('open');
+        } else {
+            const error = await response.json();
+            alert(error.message || 'Failed to add item to cart');
+        }
+    } catch (error) {
+        console.error('Error adding to cart:', error);
+    }
+}
+
+async function removeFromCart(itemId) {
+    const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+    try {
+        const response = await fetch(`/api/v1/cart/items/${itemId}`, {
+            method: 'DELETE',
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        
+        if (response.ok) {
+            const result = await response.json();
+            renderCart(result.data);
+        }
+    } catch (error) {
+        console.error('Error removing from cart:', error);
+    }
+}
+
+async function checkout() {
+    const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+    const tableId = document.getElementById('tableId').value;
+
+    try {
+        const response = await fetch(`/api/v1/cart/checkout?tableId=${tableId}`, {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        
+        if (response.ok) {
+            alert('Order placed successfully! Redirecting to tracking...');
+            window.location.href = 'index.html'; // Or a tracking page if one exists
+        } else {
+            const error = await response.json();
+            alert(error.message || 'Checkout failed');
+        }
+    } catch (error) {
+        console.error('Checkout error:', error);
+    }
+}
 
 async function loadDailySpecials() {
     await fetchAndRender('/api/v1/products/daily', 'daily-grid');
@@ -116,7 +254,7 @@ function createProductCard(product) {
             <p class="description">${product.description || 'No description available.'}</p>
             <div class="menu-card-footer">
                 <div class="price-tag">${priceHtml}</div>
-                <button class="add-btn"><i class="fas fa-plus"></i> Add</button>
+                <button class="add-btn" onclick="addToCart(${product.id})"><i class="fas fa-plus"></i> Add</button>
             </div>
         </div>
     `;
