@@ -8,21 +8,26 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function setupCartUI() {
-    const cartToggle = document.getElementById('cartToggle');
+    const sideCartTrigger = document.getElementById('sideCartTrigger');
     const closeCart = document.getElementById('closeCart');
     const cartSidebar = document.getElementById('cartSidebar');
     const checkoutBtn = document.getElementById('checkoutBtn');
 
-    cartToggle.addEventListener('click', (e) => {
-        e.preventDefault();
-        cartSidebar.classList.add('open');
-    });
+    if (sideCartTrigger) {
+        sideCartTrigger.addEventListener('click', () => {
+            cartSidebar.classList.toggle('open');
+        });
+    }
 
-    closeCart.addEventListener('click', () => {
-        cartSidebar.classList.remove('open');
-    });
+    if (closeCart) {
+        closeCart.addEventListener('click', () => {
+            cartSidebar.classList.remove('open');
+        });
+    }
 
-    checkoutBtn.addEventListener('click', checkout);
+    if (checkoutBtn) {
+        checkoutBtn.addEventListener('click', checkout);
+    }
 }
 
 async function loadCart() {
