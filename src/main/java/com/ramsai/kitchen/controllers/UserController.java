@@ -1,12 +1,15 @@
 package com.ramsai.kitchen.controllers;
 
 import com.ramsai.kitchen.models.entities.User;
+import com.ramsai.kitchen.services.FileUploadService;
 import com.ramsai.kitchen.services.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.Map;
 
 @RestController
@@ -15,6 +18,7 @@ import java.util.Map;
 public class UserController {
 
     private final UserService userService;
+    private final FileUploadService fileUploadService;
 
     @PostMapping("/password-reset/request")
     public ResponseEntity<Map<String, Object>> requestPasswordReset(@RequestBody Map<String, String> request) {
@@ -62,9 +66,22 @@ public class UserController {
                         "email", user.getEmail(),
                         "role", user.getRole(),
                         "isEmailVerified", user.isEmailVerified(),
-                        "createdAt", user.getCreatedAt()
+                        "createdAt", user.getCreatedAt(),
+                        "profilePictureUrl", user.getProfilePictureUrl() != null ? user.getProfilePictureUrl() : ""
                 ),
                 "message", "Success"
+        ));
+    }
+
+    @PostMapping("/profile-picture")
+    public ResponseEntity<Map<String, Object>> uploadProfilePicture(
+            @AuthenticationPrincipal User user,
+            @RequestParam("file") MultipartFile file) throws IOException {
+        String url = fileUploadService.saveProfilePicture(file);
+        userService.updateProfilePicture(user.getUsername(), url);
+        return ResponseEntity.ok(Map.of(
+                "data", Map.of("url", url),
+                "message", "Profile picture updated successfully"
         ));
     }
 }

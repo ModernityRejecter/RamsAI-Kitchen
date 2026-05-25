@@ -132,4 +132,13 @@ public class UserService {
         userRepository.save(user);
         auditLogService.logAction(user, "PROFILE_UPDATE", "SUCCESS", "Profile updated");
     }
+
+    @Transactional
+    public void updateProfilePicture(String username, String url) {
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        user.setProfilePictureUrl(url);
+        userRepository.save(user);
+        auditLogService.logAction(user, "PROFILE_PICTURE_UPDATE", "SUCCESS", "Profile picture updated");
+    }
 }
