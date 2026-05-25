@@ -1,29 +1,41 @@
 package com.ramsai.kitchen.config;
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @Configuration
 @EnableWebSecurity
+@RequiredArgsConstructor
 public class SecurityConfig {
+
+    private final JwtAuthenticationFilter jwtAuthFilter;
+    private final AuthenticationProvider authenticationProvider;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
             .csrf(AbstractHttpConfigurer::disable)
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/", "/index.html", "/error", "/static/**", "/css/**", "/js/**", "/images/**").permitAll()
-                .anyRequest().permitAll()
+                .requestMatchers("/api/v1/auth/**").permitAll()
+                .requestMatchers("/", "/index.html", "/login.html", "/register.html", "/error", "/static/**", "/css/**", "/js/**", "/images/**").permitAll()
+                .requestMatchers("/api/v1/manager/**").hasRole("MANAGER")
+                .requestMatchers("/api/v1/kitchen/**").hasAnyRole("CHEF", "MANAGER")
+                .requestMatchers("/api/v1/tables/**").hasAnyRole("WAITER", "MANAGER")
+                .anyRequest().authenticated()
             )
-            .formLogin(login -> login
-                .defaultSuccessUrl("/", true)
-                .permitAll()
+            .sessionManagement(session -> session
+                .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
             )
-            .logout(logout -> logout.permitAll());
+            .authenticationProvider(authenticationProvider)
+            .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
