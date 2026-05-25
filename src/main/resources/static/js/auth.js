@@ -120,7 +120,6 @@ function setupLiveValidation() {
 
 function updateUIForAuthenticatedUser(username, role) {
     const navUl = document.querySelector('nav ul');
-    if (navUl) {
         navUl.innerHTML = `
             <li><a href="index.html">Home</a></li>
             <li><a href="menu.html">Menu</a></li>
@@ -129,6 +128,7 @@ function updateUIForAuthenticatedUser(username, role) {
             ${role === 'MANAGER' ? '<li><a href="manager.html">Manager</a></li>' : ''}
             ${role === 'CHEF' || role === 'MANAGER' ? '<li><a href="kitchen.html">Kitchen</a></li>' : ''}
             ${role === 'WAITER' || role === 'MANAGER' ? '<li><a href="tables.html">Tables</a></li>' : ''}
+            <li><a href="#" id="cartToggle"><i class="fas fa-shopping-cart"></i> <span id="cartCount">0</span></a></li>
             <li><a href="#" id="logoutBtn">Logout (${username})</a></li>
         `;
 
@@ -138,7 +138,11 @@ function updateUIForAuthenticatedUser(username, role) {
             sessionStorage.clear();
             window.location.href = 'index.html';
         });
-    }
+
+        // Re-initialize cart UI if on menu page
+        if (window.location.pathname.endsWith('menu.html') && typeof setupCartUI === 'function') {
+            setupCartUI();
+        }
 }
 
 document.addEventListener('DOMContentLoaded', checkAuth);
