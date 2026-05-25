@@ -39,6 +39,9 @@ public class Product {
     @Builder.Default
     private boolean isSpecialOffer = false;
 
+    @Builder.Default
+    private boolean isDailyRecipe = false;
+
     private BigDecimal discountPrice;
 
     @Builder.Default

@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Menu | Ramsai Kitchen</title>
+    <link rel="stylesheet" href="css/style.css">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;800&display=swap" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+
+    <header>
+        <div class="logo">Rams-AI <span>Kitchen</span></div>
+        <nav>
+            <ul id="mainNav">
+                <li><a href="index.html">Home</a></li>
+                <li><a href="menu.html" class="active">Menu</a></li>
+                <li><a href="login.html">Login</a></li>
+                <li><a href="register.html">Register</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <section class="menu-page">
+        <div class="container">
+            <div class="section-title">
+                <h2>Our Delicious Menu</h2>
+                <p>Fresh ingredients, expert preparation, and a touch of AI magic.</p>
+                <div class="underline"></div>
+            </div>
+
+            <!-- Daily Specials Section -->
+            <div class="special-section" id="daily-specials-section">
+                <div class="sub-section-title">
+                    <h3><i class="fas fa-calendar-star"></i> Daily Specials</h3>
+                </div>
+                <div class="menu-grid" id="daily-grid">
+                    <div class="loading">Loading today's highlights...</div>
+                </div>
+            </div>
+
+            <!-- Recommended Section -->
+            <div class="special-section" id="recommended-section">
+                <div class="sub-section-title">
+                    <h3><i class="fas fa-magic"></i> Recommended for You</h3>
+                </div>
+                <div class="menu-grid" id="recommended-grid">
+                    <div class="loading">Finding your next favorite...</div>
+                </div>
+            </div>
+
+            <div class="menu-filters">
+                <button class="filter-btn active" data-category="all">All</button>
+                <div id="category-filters">
+                    <!-- Categories will be loaded here -->
+                </div>
+            </div>
+
+            <div class="menu-grid" id="menu-grid">
+                <!-- Products will be loaded here -->
+                <div class="loading">Loading our finest dishes...</div>
+            </div>
+        </div>
+    </section>
+
+    <footer>
+        <div class="footer-content">
+            <div class="footer-logo">RamsAI <span>Kitchen</span></div>
+            <p>Crafted for the modern culinary industry.</p>
+        </div>
+        <div class="copyright">
+            &copy; 2026 Ramsai Kitchen Project. Built with Spring Boot & Docker.
+        </div>
+    </footer>
+
+    <script src="js/auth.js"></script>
+    <script src="js/menu.js"></script>
+</body>
+</html>
