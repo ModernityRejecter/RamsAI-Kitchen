@@ -35,6 +35,15 @@ For a faster development loop, this project supports `docker compose watch`. Thi
 
 ---
 
+## Database Management
+
+This project includes **pgAdmin** to help you manage the PostgreSQL database through a web interface.
+
+### Accessing pgAdmin
+1. **Open your browser** and navigate to: [http://localhost:8888](http://localhost:8888)
+2. **Login** using the corresponding credentials.
+---
+
 ## User Stories & Acceptance Criteria
 
 ### 1. Menu Access
