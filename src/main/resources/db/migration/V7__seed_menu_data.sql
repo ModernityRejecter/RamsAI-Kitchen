@@ -1,12 +1,13 @@
--- V3__seed_menu_data.sql
+-- V7__seed_menu_data.sql
 -- Seed data for Categories and Products
 
--- 1. Insert Categories
+-- 1. Insert Categories (Idempotent)
 INSERT INTO categories (name, description) VALUES 
 ('Burgers', 'Juicy, hand-crafted burgers made with premium beef.'),
 ('Pasta', 'Authentic Italian pasta dishes with fresh sauces.'),
 ('Desserts', 'Sweet treats to end your meal perfectly.'),
-('Drinks', 'Refreshing beverages and house-made specialties.');
+('Drinks', 'Refreshing beverages and house-made specialties.')
+ON CONFLICT (name) DO NOTHING;
 
 -- 2. Insert Products
 -- Burgers
