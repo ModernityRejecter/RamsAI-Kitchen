@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Review Your Order | Ramsai Kitchen</title>
+    <link rel="stylesheet" href="css/style.css">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;800&display=swap" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+
+    <header>
+        <div class="logo">Rams-AI <span>Kitchen</span></div>
+        <nav>
+            <ul id="mainNav">
+                <li><a href="index.html">Home</a></li>
+                <li><a href="menu.html">Menu</a></li>
+                <li><a href="login.html">Login</a></li>
+                <li><a href="register.html">Register</a></li>
+                <li><a href="order.html" class="active"><i class="fas fa-shopping-cart"></i> <span id="cartCount">0</span></a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main class="order-page">
+        <div class="container">
+            <div class="section-title">
+                <h2>Review Your Selection</h2>
+                <p>Double check your items before we start the magic in the kitchen.</p>
+                <div class="underline"></div>
+            </div>
+
+            <div id="emptyOrderMsg" style="display: none; text-align: center; padding: 50px;">
+                <i class="fas fa-shopping-basket" style="font-size: 4rem; color: #ccc; margin-bottom: 20px;"></i>
+                <h3>Your cart is currently empty</h3>
+                <p>Head back to the menu to find something delicious!</p>
+                <a href="menu.html" class="cta-button" style="display: inline-block; margin-top: 20px;">View Menu</a>
+            </div>
+
+            <div class="order-container" id="orderContent">
+                <div class="order-details">
+                    <h3>Your Items</h3>
+                    <div class="order-items-list" id="detailedCartItems">
+                        <!-- Items will be loaded here -->
+                    </div>
+                </div>
+
+                <div class="order-summary">
+                    <div class="order-summary-card">
+                        <h3>Order Summary</h3>
+                        <div class="summary-row">
+                            <span>Subtotal</span>
+                            <span id="summarySubtotal">$0.00</span>
+                        </div>
+                        <div class="summary-row">
+                            <span>Service Fee</span>
+                            <span>$0.00</span>
+                        </div>
+                        <div class="summary-row summary-total">
+                            <span>Total</span>
+                            <span id="summaryTotal">$0.00</span>
+                        </div>
+
+                        <div class="table-selection" style="margin-top: 30px;">
+                            <label for="orderTableId">Your Table Number</label>
+                            <select id="orderTableId" style="width: 100%; padding: 12px; margin-top: 10px; border-radius: 8px; border: 1px solid #ddd;">
+                                <option value="1">Table 1</option>
+                                <option value="2">Table 2</option>
+                                <option value="3">Table 3</option>
+                                <option value="4">Table 4</option>
+                                <option value="5">Table 5</option>
+                            </select>
+                        </div>
+
+                        <div class="special-instructions" style="margin-top: 20px;">
+                            <label for="specialNotes">Special Instructions</label>
+                            <textarea id="specialNotes" placeholder="Any allergies or preferences?" style="width: 100%; padding: 12px; margin-top: 10px; border-radius: 8px; border: 1px solid #ddd; height: 100px; resize: none;"></textarea>
+                        </div>
+
+                        <button id="finalCheckoutBtn" class="checkout-btn" style="margin-top: 30px; font-size: 1.1rem; padding: 20px;">
+                            Place Order
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <div class="footer-content">
+            <div class="footer-logo">RamsAI <span>Kitchen</span></div>
+            <p>Crafted for the modern culinary industry.</p>
+        </div>
+        <div class="copyright">
+            &copy; 2026 Ramsai Kitchen Project. Built with Spring Boot & Docker.
+        </div>
+    </footer>
+
+    <script src="js/auth.js"></script>
+    <script src="js/order.js"></script>
+</body>
+</html>

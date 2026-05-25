@@ -130,6 +130,7 @@ function updateUIForAuthenticatedUser(username, role) {
             ${role === 'CHEF' || role === 'MANAGER' ? '<li><a href="kitchen.html">Kitchen</a></li>' : ''}
             ${role === 'WAITER' || role === 'MANAGER' ? '<li><a href="tables.html">Tables</a></li>' : ''}
             <li><a href="#" id="logoutBtn">Logout (${username})</a></li>
+            <li><a href="order.html" id="cartLink"><i class="fas fa-shopping-cart"></i> <span id="cartCount">0</span></a></li>
         `;
 
         document.getElementById('logoutBtn').addEventListener('click', (e) => {
@@ -138,6 +139,28 @@ function updateUIForAuthenticatedUser(username, role) {
             sessionStorage.clear();
             window.location.href = 'index.html';
         });
+
+        updateCartCount();
+    }
+}
+
+async function updateCartCount() {
+    const cartCount = document.getElementById('cartCount');
+    if (!cartCount) return;
+
+    const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+    if (!token) return;
+
+    try {
+        const response = await fetch('/api/v1/cart', {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (response.ok) {
+            const result = await response.json();
+            cartCount.textContent = result.data.items.length;
+        }
+    } catch (e) {
+        console.error('Error updating cart count:', e);
     }
 }
 

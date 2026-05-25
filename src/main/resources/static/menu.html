@@ -22,9 +22,41 @@
                 <li><a href="menu.html" class="active">Menu</a></li>
                 <li><a href="login.html">Login</a></li>
                 <li><a href="register.html">Register</a></li>
+                <li><a href="order.html" id="cartLink"><i class="fas fa-shopping-cart"></i> <span id="cartCount">0</span></a></li>
             </ul>
         </nav>
     </header>
+
+    <button id="sideCartTrigger" class="side-cart-trigger">
+        <i class="fas fa-shopping-basket"></i>
+        <span>Cart</span>
+    </button>
+
+    <div id="cartSidebar" class="cart-sidebar">
+        <div class="cart-header">
+            <h3>Your Order</h3>
+            <button id="closeCart">&times;</button>
+        </div>
+        <div id="cartItems" class="cart-items">
+            <!-- Cart items will be loaded here -->
+        </div>
+        <div class="cart-footer">
+            <div class="cart-total">
+                <span>Total:</span>
+                <span id="cartTotalPrice">$0.00</span>
+            </div>
+            <div class="table-selection">
+                <label for="tableId">Select Table:</label>
+                <select id="tableId">
+                    <option value="1">Table 1</option>
+                    <option value="2">Table 2</option>
+                    <option value="3">Table 3</option>
+                    <!-- In a real app, this would be fetched or set by QR code -->
+                </select>
+            </div>
+            <button id="checkoutBtn" class="checkout-btn">Checkout</button>
+        </div>
+    </div>
 
     <section class="menu-page">
         <div class="container">

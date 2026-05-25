@@ -26,7 +26,7 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/api/v1/auth/**").permitAll()
                 .requestMatchers("/api/v1/products/**").permitAll()
-                .requestMatchers("/", "/index.html", "/menu.html", "/login.html", "/register.html", "/profile.html", "/audit.html", "/error", "/static/**", "/css/**", "/js/**", "/images/**", "/uploads/**").permitAll()
+                .requestMatchers("/", "/index.html", "/menu.html", "/order.html", "/login.html", "/register.html", "/profile.html", "/audit.html", "/error", "/static/**", "/css/**", "/js/**", "/images/**", "/uploads/**").permitAll()
                 .requestMatchers("/api/v1/manager/**").hasRole("MANAGER")
                 .requestMatchers("/api/v1/kitchen/**").hasAnyRole("CHEF", "MANAGER")
                 .requestMatchers("/api/v1/tables/**").hasAnyRole("WAITER", "MANAGER")
