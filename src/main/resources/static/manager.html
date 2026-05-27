@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manager Console | RamsAI Kitchen</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-gradient: linear-gradient(135deg, #6366f1 0%, #4338ca 100%);
+            --card-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            --input-focus: #818cf8;
+            --text-dark: #111827;
+            --text-gray: #4b5563;
+            --border-color: #e5e7eb;
+        }
+
+        body {
+            background-color: #f9fafb;
+            color: var(--text-dark);
+            font-family: 'Inter', sans-serif;
+        }
+
+        .manager-page {
+            padding: 120px 40px 60px;
+            max-width: 1440px; /* Capped for better readability */
+            margin: 0 auto;
+        }
+
+        .section-title {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .section-title h2 {
+            font-size: 2.25rem;
+            font-weight: 800;
+            color: var(--text-dark);
+            margin-bottom: 10px;
+        }
+
+        .manager-grid {
+            display: grid;
+            gap: 24px;
+            grid-template-columns: 1fr;
+            grid-auto-flow: dense; /* Fills holes automatically */
+        }
+
+        /* Tablet: 2 columns */
+        @media (min-width: 850px) {
+            .manager-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        /* Desktop: 3 columns max */
+        @media (min-width: 1250px) {
+            .manager-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+
+        .manager-card {
+            background: #ffffff;
+            border-radius: 16px;
+            box-shadow: var(--card-shadow);
+            padding: 24px;
+            border: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            transition: transform 0.2s ease;
+            min-height: 480px; /* Ensure cards are uniform */
+        }
+
+        /* Wide cards span 2 columns on Tablet and Desktop */
+        @media (min-width: 850px) {
+            .wide-card {
+                grid-column: span 2;
+            }
+        }
+
+        .manager-card h3 {
+            margin-bottom: 8px;
+            color: var(--text-dark);
+            font-size: 1.25rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .manager-card h3 i {
+            color: #4f46e5;
+            font-size: 1.1rem;
+        }
+
+        .manager-card p {
+            color: var(--text-gray);
+            font-size: 0.9rem;
+            margin-bottom: 20px;
+            line-height: 1.5;
+        }
+
+        .manager-form {
+            display: grid;
+            gap: 14px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .form-group label {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-dark);
+        }
+
+        .manager-form input,
+        .manager-form select,
+        .manager-form textarea {
+            padding: 10px 14px;
+            border-radius: 10px;
+            border: 1px solid var(--border-color);
+            font-family: inherit;
+            font-size: 0.95rem;
+            background: #ffffff;
+        }
+
+        .manager-form input:focus,
+        .manager-form select:focus,
+        .manager-form textarea:focus {
+            outline: none;
+            border-color: var(--input-focus);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+        }
+
+        .manager-form button {
+            background: var(--primary-gradient);
+            color: #ffffff;
+            border: none;
+            padding: 12px;
+            border-radius: 10px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: filter 0.2s;
+            margin-top: 5px;
+        }
+
+        .manager-form button:hover {
+            filter: brightness(1.1);
+        }
+
+        .inline-row {
+            display: grid;
+            gap: 12px;
+            grid-template-columns: 1fr 1fr;
+        }
+
+        /* Recipe row handling */
+        #addBomForm .inline-row {
+            grid-template-columns: 1fr;
+        }
+
+        @media (min-width: 500px) {
+            #addBomForm .inline-row {
+                grid-template-columns: 2fr 1.5fr 1fr 1fr;
+                align-items: end;
+            }
+        }
+
+        .checkbox-group {
+            display: flex;
+            gap: 15px;
+            padding: 4px 0;
+        }
+
+        .checkbox-group label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            cursor: pointer;
+        }
+
+        .status-box {
+            margin-top: 10px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            padding: 10px;
+            border-radius: 8px;
+            display: none;
+            text-align: center;
+        }
+
+        .status-box.show {
+            display: block;
+        }
+
+        .table-wrap {
+            margin-top: 20px;
+            max-height: 280px;
+            overflow-y: auto;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            background: #ffffff;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+        }
+
+        th, td {
+            text-align: left;
+            padding: 12px 15px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        th {
+            position: sticky;
+            top: 0;
+            background: #f8fafc;
+            color: var(--text-dark);
+            font-weight: 700;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            z-index: 10;
+        }
+
+        .danger {
+            color: #ef4444;
+            font-weight: 700;
+        }
+
+        .small-btn {
+            border: none;
+            border-radius: 6px;
+            padding: 6px 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .small-btn.delete {
+            background: #fee2e2;
+            color: #b91c1c;
+        }
+
+        /* Mobile overrides */
+        @media (max-width: 767px) {
+            .manager-page {
+                padding: 100px 15px 40px;
+            }
+            .section-title h2 {
+                font-size: 1.8rem;
+            }
+            .manager-card {
+                padding: 20px;
+                min-height: auto;
+            }
+            .inline-row {
+                grid-template-columns: 1fr;
+            }
+            .checkbox-group {
+                flex-direction: column;
+                gap: 8px;
+            }
+        }
+    </style>
+    </style>
+</head>
+<body>
+<header>
+    <div class="logo">Rams-AI <span>Kitchen</span></div>
+    <nav><ul id="mainNav"></ul></nav>
+</header>
+
+<section class="manager-page">
+    <div class="section-title">
+        <h2>Manager Inventory Console</h2>
+        <p>Comprehensive control over your restaurant's products, ingredients, and stock levels.</p>
+        <div class="underline"></div>
+    </div>
+
+    <div class="manager-grid">
+        <!-- 1. Create Product -->
+        <div class="manager-card">
+            <h3><i class="fas fa-box-open"></i> Create Product</h3>
+            <p>Define new menu items and pricing.</p>
+            <form id="createProductForm" class="manager-form">
+                <input name="name" placeholder="Product name" required>
+                <textarea name="description" placeholder="Short description for the menu..."></textarea>
+                <div class="inline-row">
+                    <div class="form-group">
+                        <label>Base Price ($)</label>
+                        <input name="basePrice" type="number" step="0.01" min="0.01" placeholder="0.00" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Category</label>
+                        <select id="productCategoryId" name="categoryId" required></select>
+                    </div>
+                </div>
+                <div class="checkbox-group">
+                    <label><input type="checkbox" name="isSpecialOffer"> Special offer</label>
+                    <label><input type="checkbox" name="isDailyRecipe"> Daily recipe</label>
+                </div>
+                <div class="form-group">
+                    <label>Discount Price (Optional)</label>
+                    <input name="discountPrice" type="number" step="0.01" min="0" placeholder="0.00">
+                </div>
+                <button type="submit">Create Product</button>
+                <div class="status-box" id="productStatus"></div>
+            </form>
+        </div>
+
+        <!-- 2. Create Ingredient -->
+        <div class="manager-card wide-card">
+            <h3><i class="fas fa-leaf"></i> Create Ingredient</h3>
+            <p>Register raw materials used in your recipes.</p>
+            <form id="createIngredientForm" class="manager-form">
+                <input name="name" placeholder="Ingredient name (e.g. Beef Patty)" required>
+                <div class="inline-row">
+                    <div class="form-group">
+                        <label>Unit</label>
+                        <input name="unit" placeholder="g, ml, pcs" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Min. Threshold</label>
+                        <input name="minimumStockThreshold" type="number" step="0.01" min="0" placeholder="0" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Initial Stock</label>
+                    <input name="currentStock" type="number" step="0.01" min="0" placeholder="0" required>
+                </div>
+                <button type="submit">Create Ingredient</button>
+                <div class="status-box" id="ingredientStatus"></div>
+            </form>
+        </div>
+
+        <!-- 3. Recipe Management (BOM) -->
+        <div class="manager-card wide-card">
+            <h3><i class="fas fa-mortar-pestle"></i> Recipe Management</h3>
+            <p>Link ingredients to products to automatically track stock consumption.</p>
+            <form id="addBomForm" class="manager-form">
+                <div class="inline-row" style="grid-template-columns: 2fr 1.5fr 1fr 1fr;">
+                    <select id="bomProductId" required></select>
+                    <select id="bomIngredientId" required></select>
+                    <input id="bomQuantityRequired" type="number" step="0.01" min="0.01" placeholder="Qty" required>
+                    <button type="submit" style="margin-top: 0; padding: 10px;">Add</button>
+                </div>
+                <div class="status-box" id="bomStatus"></div>
+            </form>
+            
+            <div class="table-wrap" style="margin-top: 20px; max-height: 250px;">
+                <table>
+                    <thead>
+                    <tr><th>Ingredient</th><th>Unit</th><th>Qty</th><th>Action</th></tr>
+                    </thead>
+                    <tbody id="bomRowsTable"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- 4. Stock Adjustment -->
+        <div class="manager-card">
+            <h3><i class="fas fa-sync-alt"></i> Stock Adjustment</h3>
+            <p>Manually correct inventory levels for restocks or waste.</p>
+            <form id="adjustStockForm" class="manager-form">
+                <select id="stockIngredientId" required></select>
+                <div class="inline-row">
+                    <div class="form-group">
+                        <label>Quantity</label>
+                        <input id="stockQuantity" type="number" step="0.01" min="0.01" placeholder="0.00" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Reason</label>
+                        <select id="stockReason" required>
+                            <option value="RESTOCK">RESTOCK</option>
+                            <option value="WASTE">WASTE</option>
+                        </select>
+                    </div>
+                </div>
+                <button type="submit">Apply Adjustment</button>
+                <div class="status-box" id="stockStatus"></div>
+            </form>
+        </div>
+
+        <!-- 5. Low Stock Alert -->
+        <div class="manager-card">
+            <h3><i class="fas fa-exclamation-triangle"></i> Low Stock Alerts</h3>
+            <p>Ingredients that have fallen below their minimum threshold.</p>
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                    <tr><th>Ingredient</th><th>Current</th><th>Min</th><th>Unit</th></tr>
+                    </thead>
+                    <tbody id="lowStockTable"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- 6. Inventory Logs -->
+        <div class="manager-card wide-card">
+            <h3><i class="fas fa-history"></i> Recent Inventory Logs</h3>
+            <p>A trail of all stock movements and adjustments.</p>
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                    <tr><th>Ingredient</th><th>Change</th><th>Reason</th><th>Time</th></tr>
+                    </thead>
+                    <tbody id="inventoryLogsTable"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</section>
+
+<script src="js/auth.js"></script>
+<script src="js/manager.js"></script>
+</body>
+</html>

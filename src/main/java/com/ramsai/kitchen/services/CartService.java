@@ -32,6 +32,7 @@ public class CartService {
     private final ProductRepository productRepository;
     private final RestaurantTableRepository tableRepository;
     private final OrderItemMapper orderItemMapper;
+    private final InventoryService inventoryService;
 
     @Transactional
     public CartResponse getCart(Long customerId) {
@@ -93,6 +94,9 @@ public class CartService {
 
         RestaurantTable table = tableRepository.findById(tableId)
                 .orElseThrow(() -> new RuntimeException("Table not found"));
+
+        // Reserve stock at order reception time (checkout).
+        inventoryService.validateAndDeductForOrder(cart);
 
         cart.setTable(table);
         cart.setStatus(OrderStatus.RECEIVED);
