@@ -20,7 +20,6 @@ import java.util.stream.Collectors;
 public class KitchenService {
 
     private final OrderItemRepository orderItemRepository;
-    private final InventoryService inventoryService;
     private final com.ramsai.kitchen.mappers.OrderItemMapper orderItemMapper;
 
     @Transactional(readOnly = true)
@@ -42,10 +41,5 @@ public class KitchenService {
         orderItemRepository.save(item);
 
         log.info("Successfully updated Item {} status from {} to {}", itemId, oldStatus, newStatus);
-
-        if (newStatus == ItemStatus.COOKING && oldStatus != ItemStatus.COOKING) {
-            log.info("Item {} moved to COOKING. Triggering inventory deduction.", itemId);
-            inventoryService.deductStockForProduct(item.getProduct(), item.getQuantity());
-        }
     }
 }

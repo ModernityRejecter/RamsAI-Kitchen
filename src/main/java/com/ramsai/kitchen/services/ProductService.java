@@ -2,9 +2,12 @@ package com.ramsai.kitchen.services;
 
 import com.ramsai.kitchen.mappers.CategoryMapper;
 import com.ramsai.kitchen.mappers.ProductMapper;
+import com.ramsai.kitchen.models.dtos.ProductCreateRequest;
 import com.ramsai.kitchen.models.dtos.CategoryResponse;
 import com.ramsai.kitchen.models.dtos.ProductResponse;
+import com.ramsai.kitchen.models.entities.Category;
 import com.ramsai.kitchen.models.entities.Product;
+import com.ramsai.kitchen.exceptions.ResourceNotFoundException;
 import com.ramsai.kitchen.repositories.CategoryRepository;
 import com.ramsai.kitchen.repositories.ProductRepository;
 import lombok.RequiredArgsConstructor;
@@ -60,5 +63,31 @@ public class ProductService {
                 .filter(Product::isActive)
                 .map(productMapper::toResponse)
                 .collect(Collectors.toList());
+    }
+
+    public List<ProductResponse> getAllProductsForManagement() {
+        log.info("Fetching all products for manager");
+        return productRepository.findAll().stream()
+                .map(productMapper::toResponse)
+                .collect(Collectors.toList());
+    }
+
+    @Transactional
+    public ProductResponse createProduct(ProductCreateRequest request) {
+        Category category = categoryRepository.findById(request.categoryId())
+                .orElseThrow(() -> new ResourceNotFoundException("Category not found with id: " + request.categoryId()));
+
+        Product product = Product.builder()
+                .name(request.name().trim())
+                .description(request.description())
+                .basePrice(request.basePrice())
+                .category(category)
+                .isSpecialOffer(Boolean.TRUE.equals(request.isSpecialOffer()))
+                .isDailyRecipe(Boolean.TRUE.equals(request.isDailyRecipe()))
+                .discountPrice(request.discountPrice())
+                .build();
+
+        Product saved = productRepository.save(product);
+        return productMapper.toResponse(saved);
     }
 }
