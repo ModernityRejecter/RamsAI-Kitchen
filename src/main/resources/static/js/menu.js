@@ -4,6 +4,7 @@ document.addEventListener('DOMContentLoaded', () => {
     loadRecommended();
     loadProducts();
     loadCart();
+    loadTables();
     setupCartUI();
 });
 
@@ -130,21 +131,73 @@ async function checkout() {
     const token = localStorage.getItem('token') || sessionStorage.getItem('token');
     const tableId = document.getElementById('tableId').value;
 
+    if (!tableId) {
+        alert('Please select a table before checking out.');
+        return;
+    }
+
     try {
         const response = await fetch(`/api/v1/cart/checkout?tableId=${tableId}`, {
             method: 'POST',
             headers: { 'Authorization': `Bearer ${token}` }
         });
-        
+
         if (response.ok) {
-            alert('Order placed successfully! Redirecting to tracking...');
-            window.location.href = 'index.html'; // Or a tracking page if one exists
+            sessionStorage.removeItem('selectedTableId');
+            sessionStorage.removeItem('selectedTableNumber');
+            alert('Order placed successfully! Redirecting...');
+            window.location.href = 'index.html';
         } else {
             const error = await response.json();
             alert(error.message || 'Checkout failed');
         }
     } catch (error) {
         console.error('Checkout error:', error);
+    }
+}
+
+async function loadTables() {
+    const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+    const tableSelect = document.getElementById('tableId');
+    const label = document.getElementById('tableSelectLabel');
+    const preSelectedId = sessionStorage.getItem('selectedTableId');
+    const preSelectedNumber = sessionStorage.getItem('selectedTableNumber');
+
+    try {
+        const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+        const response = await fetch('/api/v1/tables/map', { headers });
+        const result = await response.json();
+
+        if (!response.ok) throw new Error('Failed to load tables');
+
+        // Group squares by tableNumber, keep the entry with the smallest id per group
+        const groups = {};
+        result.data.forEach(t => {
+            const n = t.tableNumber;
+            if (!groups[n] || t.id < groups[n].id) groups[n] = t;
+        });
+
+        tableSelect.innerHTML = '<option value="">-- Select a table --</option>';
+        Object.values(groups)
+            .sort((a, b) => a.tableNumber - b.tableNumber)
+            .forEach(t => {
+                const opt = document.createElement('option');
+                opt.value = t.id;
+                const statusLabel = t.status === 'FREE' ? 'Available' : 'Occupied';
+                opt.textContent = `Table ${t.tableNumber} — ${statusLabel}`;
+                if (t.status === 'OCCUPIED') opt.disabled = true;
+                if (preSelectedId && t.id.toString() === preSelectedId) {
+                    opt.selected = true;
+                    opt.disabled = false;
+                }
+                tableSelect.appendChild(opt);
+            });
+
+        if (preSelectedNumber) {
+            label.innerHTML = `Table: <strong style="color:#27ae60">Table ${preSelectedNumber} pre-selected</strong>`;
+        }
+    } catch {
+        tableSelect.innerHTML = '<option value="">Error loading tables</option>';
     }
 }
 

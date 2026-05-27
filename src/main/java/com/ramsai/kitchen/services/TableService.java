@@ -152,9 +152,40 @@ public class TableService {
     public TableResponse freeTable(Long id) {
         RestaurantTable table = tableRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Table not found"));
-        table.setStatus(com.ramsai.kitchen.enums.TableStatus.FREE);
-        RestaurantTable saved = tableRepository.save(table);
-        return mapToTableResponse(saved);
+
+        List<RestaurantTable> group = tableRepository.findAll().stream()
+                .filter(t -> t.getTableNumber().equals(table.getTableNumber()))
+                .collect(Collectors.toList());
+
+        group.forEach(t -> {
+            t.setStatus(com.ramsai.kitchen.enums.TableStatus.FREE);
+            t.setOccupiedByUserId(null);
+        });
+        tableRepository.saveAll(group);
+        return mapToTableResponse(table);
+    }
+
+    @Transactional
+    public TableResponse occupyTable(Long id, Long userId) {
+        boolean alreadyOccupied = tableRepository.findAll().stream()
+                .anyMatch(t -> userId.equals(t.getOccupiedByUserId()));
+        if (alreadyOccupied) {
+            throw new RuntimeException("You are already occupying a table. Free it first.");
+        }
+
+        RestaurantTable table = tableRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Table not found"));
+
+        List<RestaurantTable> group = tableRepository.findAll().stream()
+                .filter(t -> t.getTableNumber().equals(table.getTableNumber()))
+                .collect(Collectors.toList());
+
+        group.forEach(t -> {
+            t.setStatus(com.ramsai.kitchen.enums.TableStatus.OCCUPIED);
+            t.setOccupiedByUserId(userId);
+        });
+        tableRepository.saveAll(group);
+        return mapToTableResponse(table);
     }
 
     private TableResponse mapToTableResponse(RestaurantTable table) {
@@ -167,7 +198,8 @@ public class TableService {
                 table.getStatus(),
                 table.getXpos(),
                 table.getYpos(),
-                lastOrderTime
+                lastOrderTime,
+                table.getOccupiedByUserId()
         );
     }
 }

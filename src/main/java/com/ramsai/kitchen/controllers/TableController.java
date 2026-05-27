@@ -2,10 +2,12 @@ package com.ramsai.kitchen.controllers;
 
 import com.ramsai.kitchen.models.dtos.TableResponse;
 import com.ramsai.kitchen.models.dtos.UpdateTablePositionRequest;
+import com.ramsai.kitchen.models.entities.User;
 import com.ramsai.kitchen.services.TableService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -53,6 +55,17 @@ public class TableController {
         return ResponseEntity.ok(Map.of(
                 "data", data,
                 "message", "Table is now free"
+        ));
+    }
+
+    @PutMapping("/{id}/occupy")
+    public ResponseEntity<Map<String, Object>> occupyTable(
+            @PathVariable Long id,
+            @AuthenticationPrincipal User user) {
+        TableResponse data = tableService.occupyTable(id, user.getId());
+        return ResponseEntity.ok(Map.of(
+                "data", data,
+                "message", "Table is now occupied"
         ));
     }
 }

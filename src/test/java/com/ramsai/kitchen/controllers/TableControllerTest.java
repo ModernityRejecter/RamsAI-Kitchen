@@ -38,7 +38,7 @@ class TableControllerTest {
     @WithMockUser(roles = "MANAGER")
     void updateTablePosition_Success() throws Exception {
         UpdateTablePositionRequest request = new UpdateTablePositionRequest(5, 5);
-        TableResponse response = new TableResponse(1L, 1, TableStatus.FREE, 5, 5, null);
+        TableResponse response = new TableResponse(1L, 1, TableStatus.FREE, 5, 5, null, null);
 
         when(tableService.updateTablePosition(eq(1L), anyInt(), anyInt())).thenReturn(response);
 
@@ -55,7 +55,7 @@ class TableControllerTest {
     @WithMockUser(roles = "WAITER")
     void updateTablePosition_WaiterSuccess() throws Exception {
         UpdateTablePositionRequest request = new UpdateTablePositionRequest(5, 5);
-        TableResponse response = new TableResponse(1L, 1, TableStatus.FREE, 5, 5, null);
+        TableResponse response = new TableResponse(1L, 1, TableStatus.FREE, 5, 5, null, null);
 
         when(tableService.updateTablePosition(eq(1L), anyInt(), anyInt())).thenReturn(response);
 
@@ -79,7 +79,7 @@ class TableControllerTest {
     @Test
     @WithMockUser(roles = "CUSTOMER")
     void freeTable_CustomerSuccess() throws Exception {
-        TableResponse response = new TableResponse(1L, 1, TableStatus.FREE, 5, 5, null);
+        TableResponse response = new TableResponse(1L, 1, TableStatus.FREE, 5, 5, null, null);
         when(tableService.freeTable(eq(1L))).thenReturn(response);
 
         mockMvc.perform(put("/api/v1/tables/1/free"))

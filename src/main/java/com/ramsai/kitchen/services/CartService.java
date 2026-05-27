@@ -94,8 +94,15 @@ public class CartService {
         RestaurantTable table = tableRepository.findById(tableId)
                 .orElseThrow(() -> new RuntimeException("Table not found"));
 
-        table.setStatus(com.ramsai.kitchen.enums.TableStatus.OCCUPIED);
-        tableRepository.save(table);
+        List<RestaurantTable> group = tableRepository.findAll().stream()
+                .filter(t -> t.getTableNumber().equals(table.getTableNumber()))
+                .collect(Collectors.toList());
+
+        group.forEach(t -> {
+            t.setStatus(com.ramsai.kitchen.enums.TableStatus.OCCUPIED);
+            t.setOccupiedByUserId(customerId);
+        });
+        tableRepository.saveAll(group);
         
         cart.setTable(table);
         cart.setStatus(OrderStatus.RECEIVED);

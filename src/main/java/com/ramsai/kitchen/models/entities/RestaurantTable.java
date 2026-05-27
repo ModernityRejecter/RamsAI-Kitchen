@@ -29,4 +29,7 @@ public class RestaurantTable {
 
     @Column(name = "y_pos")
     private Integer ypos;
+
+    @Column(name = "occupied_by_user_id")
+    private Long occupiedByUserId;
 }
