@@ -290,6 +290,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // User can free their own table
             freeBtn.style.display = 'block';
             freeBtn.textContent = 'Leave Table';
+            selectBtn.style.display = 'block';
         } else if (isManagerOrWaiter) {
             // Staff can free others' tables
             freeBtn.style.display = 'block';
@@ -306,6 +307,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const response = await authenticatedFetch(`/api/v1/tables/${firstSquareId}/occupy`, { method: 'PUT' });
             if (response.ok) {
                 showStatus(`Table ${tableNumber} occupied.`, 'success');
+                sessionStorage.setItem('selectedTableId', firstSquareId);
+                sessionStorage.setItem('selectedTableNumber', tableNumber);
                 await fetchElements();
                 selectGroup(tableNumber);
             } else {

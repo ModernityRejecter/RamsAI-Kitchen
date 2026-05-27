@@ -84,13 +84,40 @@ public class TableService {
             }
         });
 
+        Integer oldTableNumber = table.getTableNumber();
+
+        // Find which group members remain after this piece is removed
+        List<RestaurantTable> oldGroupMembers = tableRepository.findAll().stream()
+                .filter(t -> !t.getId().equals(id) && t.getTableNumber().equals(oldTableNumber))
+                .collect(Collectors.toList());
+        boolean sharedBefore = !oldGroupMembers.isEmpty();
+
         table.setXpos(xPos);
         table.setYpos(yPos);
-        
-        // Grouping logic: detect adjacent tables (top, bottom, left, right)
+
+        // If dragging away splits the remaining pieces into disconnected components,
+        // assign new table numbers to each disconnected fragment.
+        if (sharedBefore) {
+            List<List<RestaurantTable>> components = findConnectedComponents(oldGroupMembers);
+
+            if (components.size() > 1) {
+                // Largest component keeps the original table number; others get new ones.
+                components.sort((a, b) -> b.size() - a.size());
+
+                for (int i = 1; i < components.size(); i++) {
+                    Integer newNumber = findSmallestAvailableTableNumber();
+                    for (RestaurantTable t : components.get(i)) {
+                        t.setTableNumber(newNumber);
+                        tableRepository.save(t);
+                    }
+                }
+            }
+        }
+
+        // Detect adjacent tables at the new position
         int[][] directions = {{0, 1}, {0, -1}, {1, 0}, {-1, 0}};
         List<RestaurantTable> neighbors = new java.util.ArrayList<>();
-        
+
         for (int[] dir : directions) {
             int nx = xPos + dir[0];
             int ny = yPos + dir[1];
@@ -100,26 +127,20 @@ public class TableService {
             }
         }
 
-        // Check if dragged table was sharing its number with others before this move
-        boolean sharedBefore = tableRepository.findAll().stream()
-                .anyMatch(t -> !t.getId().equals(id) && t.getTableNumber().equals(table.getTableNumber()));
-
         Integer effectiveDraggedNumber = table.getTableNumber();
         if (sharedBefore) {
-            // It breaks away from its old group, so it loses its right to impose its old number on the new group
+            // Broke away from old group — needs a fresh number before merging with neighbors
             effectiveDraggedNumber = findSmallestAvailableTableNumber();
         }
 
         if (!neighbors.isEmpty()) {
-            // Find the minimum number among the dragged table (effective) and all neighbors
             Integer minNeighborNumber = neighbors.stream()
                 .map(RestaurantTable::getTableNumber)
                 .min(Integer::compareTo)
                 .orElse(effectiveDraggedNumber);
-                
+
             Integer finalNumber = Math.min(effectiveDraggedNumber, minNeighborNumber);
 
-            // If the neighbors' groups need to change to the final number
             java.util.Set<Integer> neighborNumbersToUpdate = neighbors.stream()
                 .map(RestaurantTable::getTableNumber)
                 .filter(n -> !n.equals(finalNumber))
@@ -129,16 +150,15 @@ public class TableService {
                 List<RestaurantTable> tablesToUpdate = tableRepository.findAll().stream()
                     .filter(t -> neighborNumbersToUpdate.contains(t.getTableNumber()))
                     .collect(Collectors.toList());
-                    
+
                 for (RestaurantTable t : tablesToUpdate) {
                     t.setTableNumber(finalNumber);
                     tableRepository.save(t);
                 }
             }
-            
+
             table.setTableNumber(finalNumber);
         } else {
-            // No neighbors
             if (sharedBefore) {
                 table.setTableNumber(effectiveDraggedNumber);
             }
@@ -146,6 +166,45 @@ public class TableService {
 
         RestaurantTable savedTable = tableRepository.save(table);
         return mapToTableResponse(savedTable);
+    }
+
+    private List<List<RestaurantTable>> findConnectedComponents(List<RestaurantTable> tables) {
+        List<List<RestaurantTable>> components = new java.util.ArrayList<>();
+        java.util.Set<Long> visited = new java.util.HashSet<>();
+
+        java.util.Map<String, RestaurantTable> positionMap = new java.util.HashMap<>();
+        for (RestaurantTable t : tables) {
+            positionMap.put(t.getXpos() + "," + t.getYpos(), t);
+        }
+
+        int[][] directions = {{0, 1}, {0, -1}, {1, 0}, {-1, 0}};
+
+        for (RestaurantTable start : tables) {
+            if (visited.contains(start.getId())) continue;
+
+            List<RestaurantTable> component = new java.util.ArrayList<>();
+            java.util.Queue<RestaurantTable> queue = new java.util.LinkedList<>();
+            queue.add(start);
+            visited.add(start.getId());
+
+            while (!queue.isEmpty()) {
+                RestaurantTable current = queue.poll();
+                component.add(current);
+
+                for (int[] dir : directions) {
+                    String key = (current.getXpos() + dir[0]) + "," + (current.getYpos() + dir[1]);
+                    RestaurantTable neighbor = positionMap.get(key);
+                    if (neighbor != null && !visited.contains(neighbor.getId())) {
+                        visited.add(neighbor.getId());
+                        queue.add(neighbor);
+                    }
+                }
+            }
+
+            components.add(component);
+        }
+
+        return components;
     }
 
     @Transactional

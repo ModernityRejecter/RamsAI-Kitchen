@@ -163,6 +163,16 @@ async function loadTables() {
     const preSelectedId = sessionStorage.getItem('selectedTableId');
     const preSelectedNumber = sessionStorage.getItem('selectedTableNumber');
 
+    let currentUserId = null;
+    try {
+        const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+        const authResp = await fetch('/api/v1/auth/me', { headers });
+        if (authResp.ok) {
+            const authData = await authResp.json();
+            currentUserId = authData.data.id;
+        }
+    } catch (e) {}
+
     try {
         const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
         const response = await fetch('/api/v1/tables/map', { headers });
@@ -183,13 +193,21 @@ async function loadTables() {
             .forEach(t => {
                 const opt = document.createElement('option');
                 opt.value = t.id;
-                const statusLabel = t.status === 'FREE' ? 'Available' : 'Occupied';
+                
+                const isSelfOccupied = t.status === 'OCCUPIED' && currentUserId != null && t.occupiedByUserId != null && Number(t.occupiedByUserId) === Number(currentUserId);
+                const statusLabel = isSelfOccupied ? 'Occupied by you' : (t.status === 'FREE' ? 'Available' : 'Occupied');
+                
                 opt.textContent = `Table ${t.tableNumber} — ${statusLabel}`;
-                if (t.status === 'OCCUPIED') opt.disabled = true;
-                if (preSelectedId && t.id.toString() === preSelectedId) {
+                
+                if (t.status === 'OCCUPIED' && !isSelfOccupied) {
+                    opt.disabled = true;
+                }
+                
+                if ((preSelectedId && t.id.toString() === preSelectedId) || isSelfOccupied) {
                     opt.selected = true;
                     opt.disabled = false;
                 }
+                
                 tableSelect.appendChild(opt);
             });
 
