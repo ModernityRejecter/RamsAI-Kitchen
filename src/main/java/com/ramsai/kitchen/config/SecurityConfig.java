@@ -27,7 +27,6 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 // 1. Public Auth endpoints
                 .requestMatchers("/api/v1/auth/**").permitAll()
-                
                 // 2. Public Static Resources
                 .requestMatchers(
                     "/", 
@@ -40,6 +39,11 @@ public class SecurityConfig {
                     "/error"
                 ).permitAll()
 
+                // Tables public (authenticated) endpoints
+                .requestMatchers(HttpMethod.GET, "/api/v1/tables/map").authenticated()
+                .requestMatchers(HttpMethod.PUT, "/api/v1/tables/*/free").authenticated()
+                .requestMatchers(HttpMethod.PUT, "/api/v1/tables/*/occupy").authenticated()
+
                 // 3. Manager specific endpoints
                 .requestMatchers("/api/v1/manager/**").hasRole("MANAGER")
                 .requestMatchers(HttpMethod.GET, "/api/v1/products/manage").hasRole("MANAGER")
@@ -51,6 +55,7 @@ public class SecurityConfig {
                 
                 // 4. Chef/Manager shared endpoints
                 .requestMatchers("/api/v1/kitchen/**").hasAnyRole("CHEF", "MANAGER")
+                .requestMatchers("/api/v1/ai/**").hasAnyRole("CHEF", "MANAGER")
                 .requestMatchers("/api/v1/inventory/**").hasAnyRole("CHEF", "MANAGER")
                 
                 // 5. Waiter/Manager shared endpoints

@@ -128,7 +128,8 @@ function updateUIForAuthenticatedUser(username, role) {
             ${role === 'MANAGER' ? '<li><a href="audit.html">Audit Logs</a></li>' : ''}
             ${role === 'MANAGER' ? '<li><a href="manager.html">Manager</a></li>' : ''}
             ${role === 'CHEF' || role === 'MANAGER' ? '<li><a href="kitchen.html">Kitchen</a></li>' : ''}
-            ${role === 'WAITER' || role === 'MANAGER' ? '<li><a href="tables.html">Tables</a></li>' : ''}
+            ${role === 'CUSTOMER' || role === 'WAITER' || role === 'MANAGER' ? '<li><a href="tables.html">Tables</a></li>' : ''}
+            ${role === 'CUSTOMER' || role === 'WAITER' || role === 'MANAGER' ? '<li><a href="my-orders.html">My Orders</a></li>' : ''}
             <li><a href="#" id="logoutBtn">Logout (${username})</a></li>
             <li><a href="order.html" id="cartLink"><i class="fas fa-shopping-cart"></i> <span id="cartCount">0</span></a></li>
         `;

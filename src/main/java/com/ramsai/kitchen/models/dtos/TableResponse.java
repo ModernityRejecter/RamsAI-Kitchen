@@ -9,5 +9,7 @@ public record TableResponse(
     TableStatus status,
     Integer xPos,
     Integer yPos,
-    LocalDateTime lastOrderTime
+    LocalDateTime lastOrderTime,
+    Long occupiedByUserId,
+    LocalDateTime occupiedAt
 ) {}

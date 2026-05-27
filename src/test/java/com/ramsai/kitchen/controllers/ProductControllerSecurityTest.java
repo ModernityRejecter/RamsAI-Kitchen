@@ -51,7 +51,7 @@ class ProductControllerSecurityTest {
 
         ProductResponse response = new ProductResponse(
                 10L, "Margherita Pizza", "Classic pizza", BigDecimal.valueOf(35),
-                false, false, null, 0.0, "Pizza", 1L
+                false, false, null, 0.0, "Pizza", 1L, "APPROVED"
         );
 
         when(productService.createProduct(any(ProductCreateRequest.class))).thenReturn(response);

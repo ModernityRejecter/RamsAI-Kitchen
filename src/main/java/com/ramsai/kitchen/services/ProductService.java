@@ -30,25 +30,22 @@ public class ProductService {
     private final CategoryMapper categoryMapper;
 
     public List<ProductResponse> getAllActiveProducts() {
-        log.info("Fetching all active products");
-        return productRepository.findAllByIsActiveTrue().stream()
+        log.info("Fetching all active approved products");
+        return productRepository.findAllByIsActiveTrueAndApprovalStatus(Product.ApprovalStatus.APPROVED).stream()
                 .map(productMapper::toResponse)
                 .collect(Collectors.toList());
     }
 
     public List<ProductResponse> getDailyRecipes() {
-        log.info("Fetching daily recipes");
-        return productRepository.findAllByIsDailyRecipeTrueAndIsActiveTrue().stream()
+        log.info("Fetching approved daily recipes");
+        return productRepository.findAllByIsDailyRecipeTrueAndIsActiveTrueAndApprovalStatus(Product.ApprovalStatus.APPROVED).stream()
                 .map(productMapper::toResponse)
                 .collect(Collectors.toList());
     }
 
     public List<ProductResponse> getRecommendations() {
-        log.info("Fetching recommendations");
-        // For now, recommend top rated products. 
-        // In the future, this can be personalized using OrderItemRepository.findPopularProducts() 
-        // or user-specific history.
-        return productRepository.findTop6ByIsActiveTrueOrderByAverageRatingDesc().stream()
+        log.info("Fetching approved recommendations");
+        return productRepository.findTop6ByIsActiveTrueAndApprovalStatusOrderByAverageRatingDesc(Product.ApprovalStatus.APPROVED).stream()
                 .map(productMapper::toResponse)
                 .collect(Collectors.toList());
     }
@@ -61,8 +58,8 @@ public class ProductService {
     }
 
     public List<ProductResponse> getProductsByCategory(Long categoryId) {
-        log.info("Fetching products for category {}", categoryId);
-        return productRepository.findAllByCategoryId(categoryId).stream()
+        log.info("Fetching approved products for category {}", categoryId);
+        return productRepository.findAllByCategoryIdAndApprovalStatus(categoryId, Product.ApprovalStatus.APPROVED).stream()
                 .filter(Product::isActive)
                 .map(productMapper::toResponse)
                 .collect(Collectors.toList());

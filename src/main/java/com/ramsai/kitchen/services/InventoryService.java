@@ -39,9 +39,7 @@ public class InventoryService {
         }
 
         for (OrderItem item : order.getItems()) {
-            Product product = productRepository.findById(item.getProductId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Product not found with id: " + item.getProductId()));
-            deductStockForProduct(product, item.getQuantity());
+            deductStockForProduct(item.getProduct(), item.getQuantity());
         }
     }
 

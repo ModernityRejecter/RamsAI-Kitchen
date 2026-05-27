@@ -5,6 +5,7 @@ import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "restaurant_tables")
@@ -29,4 +30,10 @@ public class RestaurantTable {
 
     @Column(name = "y_pos")
     private Integer ypos;
+
+    @Column(name = "occupied_by_user_id")
+    private Long occupiedByUserId;
+
+    @Column(name = "occupied_at")
+    private LocalDateTime occupiedAt;
 }

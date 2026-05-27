@@ -52,14 +52,14 @@ public class CartService {
 
         // Check if item already exists
         cart.getItems().stream()
-                .filter(item -> item.getProductId().equals(product.getId()))
+                .filter(item -> item.getProduct().getId().equals(product.getId()))
                 .findFirst()
                 .ifPresentOrElse(
                     existingItem -> existingItem.setQuantity(existingItem.getQuantity() + request.quantity()),
                     () -> {
                         OrderItem newItem = new OrderItem();
                         newItem.setOrder(cart);
-                        newItem.setProductId(product.getId());
+                        newItem.setProduct(product);
                         newItem.setQuantity(request.quantity());
                         newItem.setUnitPrice(product.isSpecialOffer() ? product.getDiscountPrice() : product.getBasePrice());
                         newItem.setSpecialNotes(request.specialNotes());
@@ -97,6 +97,16 @@ public class CartService {
 
         // Reserve stock at order reception time (checkout).
         inventoryService.validateAndDeductForOrder(cart);
+
+        List<RestaurantTable> group = tableRepository.findAll().stream()
+                .filter(t -> t.getTableNumber().equals(table.getTableNumber()))
+                .collect(Collectors.toList());
+
+        group.forEach(t -> {
+            t.setStatus(com.ramsai.kitchen.enums.TableStatus.OCCUPIED);
+            t.setOccupiedByUserId(customerId);
+        });
+        tableRepository.saveAll(group);
 
         cart.setTable(table);
         cart.setStatus(OrderStatus.RECEIVED);

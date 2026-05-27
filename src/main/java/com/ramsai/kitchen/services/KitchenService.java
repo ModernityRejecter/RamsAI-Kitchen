@@ -5,7 +5,6 @@ import com.ramsai.kitchen.exceptions.ResourceNotFoundException;
 import com.ramsai.kitchen.models.entities.OrderItem;
 import com.ramsai.kitchen.models.entities.Product;
 import com.ramsai.kitchen.repositories.OrderItemRepository;
-import com.ramsai.kitchen.repositories.ProductRepository;
 import com.ramsai.kitchen.models.dtos.OrderItemResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -21,20 +20,20 @@ import java.util.stream.Collectors;
 public class KitchenService {
 
     private final OrderItemRepository orderItemRepository;
-    private final ProductRepository productRepository;
+    private final com.ramsai.kitchen.mappers.OrderItemMapper orderItemMapper;
 
     @Transactional(readOnly = true)
     public List<OrderItemResponse> getKdsItems(ItemStatus status) {
-        return orderItemRepository.findAllByItemStatusOrderByOrderCreatedAtAsc(status)
+        return orderItemRepository.findAllWithProductByItemStatusOrderByOrderCreatedAtAsc(status)
                 .stream()
-                .map(this::mapToResponse)
+                .map(orderItemMapper::toResponse)
                 .collect(Collectors.toList());
     }
 
     @Transactional
     public void updateItemStatus(Long itemId, ItemStatus newStatus) {
         log.info("Attempting to update status for Item {} to {}", itemId, newStatus);
-        OrderItem item = orderItemRepository.findById(itemId)
+        OrderItem item = orderItemRepository.findByIdWithProduct(itemId)
                 .orElseThrow(() -> new ResourceNotFoundException("OrderItem not found with id: " + itemId));
 
         ItemStatus oldStatus = item.getItemStatus();
@@ -42,21 +41,5 @@ public class KitchenService {
         orderItemRepository.save(item);
 
         log.info("Successfully updated Item {} status from {} to {}", itemId, oldStatus, newStatus);
-    }
-
-    private OrderItemResponse mapToResponse(OrderItem item) {
-        Product product = productRepository.findById(item.getProductId()).orElse(null);
-        String productName = (product != null) ? product.getName() : "Unknown Product";
-        
-        return new OrderItemResponse(
-                item.getId(),
-                item.getOrder().getId(),
-                item.getProductId(),
-                productName,
-                item.getQuantity(),
-                item.getUnitPrice(),
-                item.getSpecialNotes(),
-                item.getItemStatus()
-        );
     }
 }

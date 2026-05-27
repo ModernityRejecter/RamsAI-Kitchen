@@ -11,9 +11,12 @@ import java.util.List;
 @Repository
 public interface OrderItemRepository extends JpaRepository<OrderItem, Long> {
     
-    @Query("SELECT oi FROM OrderItem oi JOIN FETCH oi.order o WHERE oi.itemStatus = :status ORDER BY o.createdAt ASC")
-    List<OrderItem> findAllByItemStatusOrderByOrderCreatedAtAsc(ItemStatus status);
+    @Query("SELECT oi FROM OrderItem oi JOIN FETCH oi.order o JOIN FETCH oi.product p WHERE oi.itemStatus = :status ORDER BY o.createdAt ASC")
+    List<OrderItem> findAllWithProductByItemStatusOrderByOrderCreatedAtAsc(ItemStatus status);
 
-    @Query("SELECT oi.productId, SUM(oi.quantity) as totalQty FROM OrderItem oi GROUP BY oi.productId ORDER BY totalQty DESC")
+    @Query("SELECT oi FROM OrderItem oi JOIN FETCH oi.product p WHERE oi.id = :id")
+    java.util.Optional<OrderItem> findByIdWithProduct(Long id);
+
+    @Query("SELECT p.id, SUM(oi.quantity) as totalQty FROM OrderItem oi JOIN oi.product p GROUP BY p.id ORDER BY totalQty DESC")
     List<Object[]> findPopularProducts();
 }
