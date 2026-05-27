@@ -12,5 +12,6 @@ public record ProductResponse(
     BigDecimal discountPrice,
     Double averageRating,
     String categoryName,
-    Long categoryId
+    Long categoryId,
+    String approvalStatus
 ) {}

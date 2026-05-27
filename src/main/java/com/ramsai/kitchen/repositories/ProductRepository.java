@@ -12,4 +12,9 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     List<Product> findAllByIsActiveTrue();
     List<Product> findAllByIsDailyRecipeTrueAndIsActiveTrue();
     List<Product> findTop6ByIsActiveTrueOrderByAverageRatingDesc();
+
+    List<Product> findAllByCategoryIdAndApprovalStatus(Long categoryId, Product.ApprovalStatus status);
+    List<Product> findAllByIsActiveTrueAndApprovalStatus(Product.ApprovalStatus status);
+    List<Product> findAllByIsDailyRecipeTrueAndIsActiveTrueAndApprovalStatus(Product.ApprovalStatus status);
+    List<Product> findTop6ByIsActiveTrueAndApprovalStatusOrderByAverageRatingDesc(Product.ApprovalStatus status);
 }

@@ -11,5 +11,7 @@ import java.util.Optional;
 @Repository
 public interface OrderRepository extends JpaRepository<Order, Long> {
     List<Order> findAllByTableIdOrderByCreatedAtDesc(Long tableId);
+    
+    @org.springframework.data.jpa.repository.Query("SELECT DISTINCT o FROM Order o LEFT JOIN FETCH o.items WHERE o.customerId = :customerId AND o.status = :status")
     Optional<Order> findByCustomerIdAndStatus(Long customerId, OrderStatus status);
 }

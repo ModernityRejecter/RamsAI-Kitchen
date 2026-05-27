@@ -148,6 +148,15 @@ public class TableService {
         return mapToTableResponse(savedTable);
     }
 
+    @Transactional
+    public TableResponse freeTable(Long id) {
+        RestaurantTable table = tableRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Table not found"));
+        table.setStatus(com.ramsai.kitchen.enums.TableStatus.FREE);
+        RestaurantTable saved = tableRepository.save(table);
+        return mapToTableResponse(saved);
+    }
+
     private TableResponse mapToTableResponse(RestaurantTable table) {
         List<Order> orders = orderRepository.findAllByTableIdOrderByCreatedAtDesc(table.getId());
         LocalDateTime lastOrderTime = orders.isEmpty() ? null : orders.get(0).getCreatedAt();

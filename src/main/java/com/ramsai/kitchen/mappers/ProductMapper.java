@@ -12,5 +12,6 @@ public interface ProductMapper {
     @Mapping(target = "categoryId", source = "category.id")
     @Mapping(target = "isSpecialOffer", source = "specialOffer")
     @Mapping(target = "isDailyRecipe", source = "dailyRecipe")
+    @Mapping(target = "approvalStatus", source = "approvalStatus")
     ProductResponse toResponse(Product product);
 }

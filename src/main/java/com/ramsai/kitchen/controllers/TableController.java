@@ -46,4 +46,13 @@ public class TableController {
                 "message", "Table position updated successfully"
         ));
     }
+
+    @PutMapping("/{id}/free")
+    public ResponseEntity<Map<String, Object>> freeTable(@PathVariable Long id) {
+        TableResponse data = tableService.freeTable(id);
+        return ResponseEntity.ok(Map.of(
+                "data", data,
+                "message", "Table is now free"
+        ));
+    }
 }

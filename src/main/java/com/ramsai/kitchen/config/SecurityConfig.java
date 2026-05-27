@@ -3,6 +3,7 @@ package com.ramsai.kitchen.config;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -28,8 +29,11 @@ public class SecurityConfig {
                 .requestMatchers("/", "/index.html", "/login.html", "/register.html", "/profile.html", "/audit.html", "/tables.html", "/error", "/static/**", "/css/**", "/js/**", "/images/**", "/uploads/**").permitAll()
                 .requestMatchers("/api/v1/products/**").permitAll()
                 .requestMatchers("/", "/index.html", "/menu.html", "/order.html", "/login.html", "/register.html", "/profile.html", "/audit.html", "/error", "/static/**", "/css/**", "/js/**", "/images/**", "/uploads/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/v1/tables/map").authenticated()
+                .requestMatchers(HttpMethod.PUT, "/api/v1/tables/*/free").authenticated()
                 .requestMatchers("/api/v1/manager/**").hasRole("MANAGER")
                 .requestMatchers("/api/v1/kitchen/**").hasAnyRole("CHEF", "MANAGER")
+                .requestMatchers("/api/v1/ai/**").hasAnyRole("CHEF", "MANAGER")
                 .requestMatchers("/api/v1/tables/**").hasAnyRole("WAITER", "MANAGER")
                 .anyRequest().authenticated()
             )

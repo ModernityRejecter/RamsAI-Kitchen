@@ -51,14 +51,14 @@ public class CartService {
 
         // Check if item already exists
         cart.getItems().stream()
-                .filter(item -> item.getProductId().equals(product.getId()))
+                .filter(item -> item.getProduct().getId().equals(product.getId()))
                 .findFirst()
                 .ifPresentOrElse(
                     existingItem -> existingItem.setQuantity(existingItem.getQuantity() + request.quantity()),
                     () -> {
                         OrderItem newItem = new OrderItem();
                         newItem.setOrder(cart);
-                        newItem.setProductId(product.getId());
+                        newItem.setProduct(product);
                         newItem.setQuantity(request.quantity());
                         newItem.setUnitPrice(product.isSpecialOffer() ? product.getDiscountPrice() : product.getBasePrice());
                         newItem.setSpecialNotes(request.specialNotes());
@@ -94,6 +94,9 @@ public class CartService {
         RestaurantTable table = tableRepository.findById(tableId)
                 .orElseThrow(() -> new RuntimeException("Table not found"));
 
+        table.setStatus(com.ramsai.kitchen.enums.TableStatus.OCCUPIED);
+        tableRepository.save(table);
+        
         cart.setTable(table);
         cart.setStatus(OrderStatus.RECEIVED);
         orderRepository.save(cart);

@@ -11,12 +11,7 @@ import org.mapstruct.Named;
 public interface OrderItemMapper {
 
     @Mapping(target = "orderId", source = "order.id")
-    @Mapping(target = "productName", source = "productId", qualifiedByName = "productIdToName")
+    @Mapping(target = "productId", source = "product.id")
+    @Mapping(target = "productName", source = "product.name")
     OrderItemResponse toResponse(OrderItem orderItem);
-
-    @Named("productIdToName")
-    default String productIdToName(Long productId) {
-        // This is a placeholder, usually handled in service or with a decorator
-        return "Product ID: " + productId;
-    }
 }

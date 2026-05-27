@@ -11,17 +11,55 @@ async function loadDetailedCart() {
     }
 
     try {
-        const response = await fetch('/api/v1/cart', {
+        const cartResponse = await fetch('/api/v1/cart', {
             headers: { 'Authorization': `Bearer ${token}` }
         });
-        const result = await response.json();
+        const cartResult = await cartResponse.json();
         
-        if (response.ok) {
-            renderDetailedCart(result.data);
+        if (cartResponse.ok) {
+            renderDetailedCart(cartResult.data);
         }
+
+        // Load Tables
+        const tablesResponse = await fetch('/api/v1/tables/map', {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const tablesResult = await tablesResponse.json();
+        
+        if (tablesResponse.ok) {
+            populateTableDropdown(tablesResult.data);
+        }
+
     } catch (error) {
-        console.error('Error loading detailed cart:', error);
+        console.error('Error loading detailed cart or tables:', error);
     }
+}
+
+function populateTableDropdown(tables) {
+    const dropdown = document.getElementById('orderTableId');
+    if (!dropdown) return;
+    
+    dropdown.innerHTML = '';
+    // Sort tables by number
+    tables.sort((a, b) => a.tableNumber - b.tableNumber);
+    
+    const selectedTableId = sessionStorage.getItem('selectedTableId');
+
+    tables.forEach(table => {
+        const option = document.createElement('option');
+        option.value = table.id;
+        option.textContent = `Table ${table.tableNumber} (${table.status})`;
+        
+        if (table.id.toString() === selectedTableId) {
+            option.selected = true;
+        }
+
+        if (table.status === 'OCCUPIED' && table.id.toString() !== selectedTableId) {
+            option.disabled = true;
+            option.textContent += ' - Currently Occupied';
+        }
+        dropdown.appendChild(option);
+    });
 }
 
 function renderDetailedCart(cart) {
@@ -107,6 +145,8 @@ function setupOrderUI() {
                 });
                 
                 if (response.ok) {
+                    sessionStorage.removeItem('selectedTableId');
+                    sessionStorage.removeItem('selectedTableNumber');
                     alert('Order placed successfully! Redirecting to home...');
                     window.location.href = 'index.html';
                 } else {

@@ -75,4 +75,15 @@ class TableControllerTest {
                 .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isForbidden());
     }
+
+    @Test
+    @WithMockUser(roles = "CUSTOMER")
+    void freeTable_CustomerSuccess() throws Exception {
+        TableResponse response = new TableResponse(1L, 1, TableStatus.FREE, 5, 5, null);
+        when(tableService.freeTable(eq(1L))).thenReturn(response);
+
+        mockMvc.perform(put("/api/v1/tables/1/free"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.message").value("Table is now free"));
+    }
 }

@@ -25,6 +25,13 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    const userRole = localStorage.getItem('role') || sessionStorage.getItem('role');
+    const isManagerOrWaiter = userRole === 'MANAGER' || userRole === 'WAITER';
+
+    if (!isManagerOrWaiter) {
+        document.querySelector('.controls').style.display = 'none';
+    }
+
     async function fetchElements() {
         try {
             const [tablesRes, wallsRes] = await Promise.all([
@@ -63,7 +70,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 domEl.innerText = element.tableNumber;
                 
                 if (element.status === 'OCCUPIED') domEl.classList.add('occupied');
-                if (element.status === 'READY') domEl.classList.add('ready');
+                if (element.status === 'FREE') domEl.classList.add('free');
+                if (element.status === 'READY') domEl.classList.add('ready'); // Fallback for old status if any
+
+                domEl.title = `Status: ${element.status}`;
             } else {
                 domEl.classList.add('restaurant-wall');
             }
@@ -71,27 +81,56 @@ document.addEventListener('DOMContentLoaded', () => {
             const x = element.xPos || element.xpos || 0;
             const y = element.yPos || element.ypos || 0;
             
-            // Ensure local state uses camelCase to match
             element.xPos = x;
             element.yPos = y;
 
-            // Remove any inline styles left over
             domEl.style.left = '';
             domEl.style.top = '';
-            domEl.style.gridColumn = '';
-            domEl.style.gridRow = '';
+            
+            if (isManagerOrWaiter) {
+                domEl.addEventListener('mousedown', startDragging);
+            } else {
+                domEl.style.cursor = 'pointer';
+            }
 
-            domEl.addEventListener('mousedown', startDragging);
+            // Click handler for everyone
+            domEl.addEventListener('click', (e) => handleTableClick(e, element));
             
             const targetCell = floorPlan.querySelector(`.grid-cell[data-x="${x}"][data-y="${y}"]`);
             if (targetCell) {
                 targetCell.appendChild(domEl);
-            } else {
-                // Out of bounds fallback
-                const firstCell = floorPlan.querySelector('.grid-cell');
-                if (firstCell) firstCell.appendChild(domEl);
             }
         });
+    }
+
+    async function handleTableClick(e, element) {
+        if (element.elementType !== 'table') return;
+        
+        // If we were dragging, don't trigger click
+        if (draggedElement) return;
+
+        if (element.status === 'FREE') {
+            if (confirm(`Do you want to select Table ${element.tableNumber}?`)) {
+                // Store selected table in session storage for order page
+                sessionStorage.setItem('selectedTableId', element.id);
+                sessionStorage.setItem('selectedTableNumber', element.tableNumber);
+                showStatus(`Table ${element.tableNumber} selected! Go to Menu to order.`, 'success');
+            }
+        } else if (element.status === 'OCCUPIED') {
+            if (confirm(`Table ${element.tableNumber} is occupied. Do you want to free it?`)) {
+                try {
+                    const response = await authenticatedFetch(`/api/v1/tables/${element.id}/free`, {
+                        method: 'PUT'
+                    });
+                    if (response.ok) {
+                        showStatus(`Table ${element.tableNumber} is now free.`, 'success');
+                        fetchElements();
+                    }
+                } catch (err) {
+                    showStatus('Error freeing table', 'error');
+                }
+            }
+        }
     }
 
     function startDragging(e) {
