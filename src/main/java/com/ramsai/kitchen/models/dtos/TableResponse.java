@@ -10,5 +10,6 @@ public record TableResponse(
     Integer xPos,
     Integer yPos,
     LocalDateTime lastOrderTime,
-    Long occupiedByUserId
+    Long occupiedByUserId,
+    LocalDateTime occupiedAt
 ) {}

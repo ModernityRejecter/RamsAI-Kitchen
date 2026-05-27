@@ -219,6 +219,7 @@ public class TableService {
         group.forEach(t -> {
             t.setStatus(com.ramsai.kitchen.enums.TableStatus.FREE);
             t.setOccupiedByUserId(null);
+            t.setOccupiedAt(null);
         });
         tableRepository.saveAll(group);
         return mapToTableResponse(table);
@@ -239,9 +240,11 @@ public class TableService {
                 .filter(t -> t.getTableNumber().equals(table.getTableNumber()))
                 .collect(Collectors.toList());
 
+        LocalDateTime now = LocalDateTime.now();
         group.forEach(t -> {
             t.setStatus(com.ramsai.kitchen.enums.TableStatus.OCCUPIED);
             t.setOccupiedByUserId(userId);
+            t.setOccupiedAt(now);
         });
         tableRepository.saveAll(group);
         return mapToTableResponse(table);
@@ -258,7 +261,8 @@ public class TableService {
                 table.getXpos(),
                 table.getYpos(),
                 lastOrderTime,
-                table.getOccupiedByUserId()
+                table.getOccupiedByUserId(),
+                table.getOccupiedAt()
         );
     }
 }

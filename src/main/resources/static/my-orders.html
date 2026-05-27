@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Orders | Ramsai Kitchen</title>
+    <link rel="stylesheet" href="css/style.css">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;800&display=swap" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+
+    <header>
+        <div class="logo">Rams-AI <span>Kitchen</span></div>
+        <nav>
+            <ul id="mainNav">
+                <li><a href="index.html">Home</a></li>
+                <li><a href="menu.html">Menu</a></li>
+                <li><a href="login.html">Login</a></li>
+                <li><a href="register.html">Register</a></li>
+                <li><a href="order.html" id="cartLink"><i class="fas fa-shopping-cart"></i> <span id="cartCount">0</span></a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main class="my-orders-page">
+        <div class="container">
+            <div class="section-title">
+                <h2>My Orders</h2>
+                <p>Track the kitchen's progress on what you ordered.</p>
+                <div class="underline"></div>
+            </div>
+
+            <div id="myOrdersStatus" class="my-orders-status"></div>
+
+            <!-- Currently-at-table orders: full info, status of order + each item -->
+            <section class="current-orders-section">
+                <div class="sub-section-title">
+                    <h3>
+                        <i class="fas fa-utensils"></i>
+                        Your Current Table
+                        <span id="currentTableLabel" class="current-table-label"></span>
+                    </h3>
+                    <button id="refreshOrdersBtn" class="refresh-btn" type="button" title="Refresh">
+                        <i class="fas fa-rotate-right"></i> Refresh
+                    </button>
+                </div>
+
+                <div id="currentOrdersList" class="current-orders-list">
+                    <div class="loading">Looking up your table...</div>
+                </div>
+
+                <div id="noCurrentTableMsg" class="no-current-table" style="display:none;">
+                    <i class="fas fa-chair" style="font-size: 2.5rem; color: #ccc; margin-bottom: 10px;"></i>
+                    <p>You aren't seated at a table right now. Pick a table to start ordering.</p>
+                    <a href="tables.html" class="cta-button" style="display: inline-block; margin-top: 10px;">Choose a Table</a>
+                </div>
+            </section>
+
+            <!-- Order history: expandable cards -->
+            <section class="history-section">
+                <div class="sub-section-title">
+                    <h3><i class="fas fa-clock-rotate-left"></i> Order History</h3>
+                </div>
+
+                <div id="historyList" class="history-list">
+                    <div class="loading">Loading history...</div>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <footer>
+        <div class="footer-content">
+            <div class="footer-logo">RamsAI <span>Kitchen</span></div>
+            <p>Crafted for the modern culinary industry.</p>
+        </div>
+        <div class="copyright">
+            &copy; 2026 Ramsai Kitchen Project. Built with Spring Boot &amp; Docker.
+        </div>
+    </footer>
+
+    <script src="js/auth.js"></script>
+    <script src="js/my-orders.js"></script>
+</body>
+</html>

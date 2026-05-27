@@ -26,9 +26,9 @@ public class SecurityConfig {
             .csrf(AbstractHttpConfigurer::disable)
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/api/v1/auth/**").permitAll()
-                .requestMatchers("/", "/index.html", "/login.html", "/register.html", "/profile.html", "/audit.html", "/tables.html", "/error", "/static/**", "/css/**", "/js/**", "/images/**", "/uploads/**").permitAll()
+                .requestMatchers("/", "/index.html", "/login.html", "/register.html", "/profile.html", "/audit.html", "/tables.html", "/my-orders.html", "/error", "/static/**", "/css/**", "/js/**", "/images/**", "/uploads/**").permitAll()
                 .requestMatchers("/api/v1/products/**").permitAll()
-                .requestMatchers("/", "/index.html", "/menu.html", "/order.html", "/login.html", "/register.html", "/profile.html", "/audit.html", "/error", "/static/**", "/css/**", "/js/**", "/images/**", "/uploads/**").permitAll()
+                .requestMatchers("/", "/index.html", "/menu.html", "/order.html", "/login.html", "/register.html", "/profile.html", "/audit.html", "/my-orders.html", "/error", "/static/**", "/css/**", "/js/**", "/images/**", "/uploads/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/v1/tables/map").authenticated()
                 .requestMatchers(HttpMethod.PUT, "/api/v1/tables/*/free").authenticated()
                 .requestMatchers(HttpMethod.PUT, "/api/v1/tables/*/occupy").authenticated()
