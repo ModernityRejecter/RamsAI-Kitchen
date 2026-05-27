@@ -22,7 +22,6 @@ public class KitchenService {
 
     private final OrderItemRepository orderItemRepository;
     private final ProductRepository productRepository;
-    private final InventoryService inventoryService;
 
     @Transactional(readOnly = true)
     public List<OrderItemResponse> getKdsItems(ItemStatus status) {
@@ -43,13 +42,6 @@ public class KitchenService {
         orderItemRepository.save(item);
 
         log.info("Successfully updated Item {} status from {} to {}", itemId, oldStatus, newStatus);
-
-        if (newStatus == ItemStatus.COOKING && oldStatus != ItemStatus.COOKING) {
-            log.info("Item {} moved to COOKING. Triggering inventory deduction.", itemId);
-            Product product = productRepository.findById(item.getProductId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Product not found with id: " + item.getProductId()));
-            inventoryService.deductStockForProduct(product, item.getQuantity());
-        }
     }
 
     private OrderItemResponse mapToResponse(OrderItem item) {

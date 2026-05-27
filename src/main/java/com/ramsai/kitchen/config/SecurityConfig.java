@@ -3,6 +3,7 @@ package com.ramsai.kitchen.config;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -24,13 +25,41 @@ public class SecurityConfig {
         http
             .csrf(AbstractHttpConfigurer::disable)
             .authorizeHttpRequests(auth -> auth
+                // 1. Public Auth endpoints
                 .requestMatchers("/api/v1/auth/**").permitAll()
-                .requestMatchers("/", "/index.html", "/login.html", "/register.html", "/profile.html", "/audit.html", "/tables.html", "/error", "/static/**", "/css/**", "/js/**", "/images/**", "/uploads/**").permitAll()
-                .requestMatchers("/api/v1/products/**").permitAll()
-                .requestMatchers("/", "/index.html", "/menu.html", "/order.html", "/login.html", "/register.html", "/profile.html", "/audit.html", "/error", "/static/**", "/css/**", "/js/**", "/images/**", "/uploads/**").permitAll()
+                
+                // 2. Public Static Resources
+                .requestMatchers(
+                    "/", 
+                    "/*.html", 
+                    "/static/**", 
+                    "/css/**", 
+                    "/js/**", 
+                    "/images/**", 
+                    "/uploads/**", 
+                    "/error"
+                ).permitAll()
+
+                // 3. Manager specific endpoints
                 .requestMatchers("/api/v1/manager/**").hasRole("MANAGER")
+                .requestMatchers(HttpMethod.GET, "/api/v1/products/manage").hasRole("MANAGER")
+                .requestMatchers(HttpMethod.POST, "/api/v1/products/**").hasRole("MANAGER")
+                .requestMatchers(HttpMethod.POST, "/api/v1/inventory/**").hasRole("MANAGER")
+                .requestMatchers(HttpMethod.PUT, "/api/v1/inventory/**").hasRole("MANAGER")
+                .requestMatchers(HttpMethod.DELETE, "/api/v1/inventory/**").hasRole("MANAGER")
+                .requestMatchers("/api/v1/inventory/logs/**").hasRole("MANAGER")
+                
+                // 4. Chef/Manager shared endpoints
                 .requestMatchers("/api/v1/kitchen/**").hasAnyRole("CHEF", "MANAGER")
+                .requestMatchers("/api/v1/inventory/**").hasAnyRole("CHEF", "MANAGER")
+                
+                // 5. Waiter/Manager shared endpoints
                 .requestMatchers("/api/v1/tables/**").hasAnyRole("WAITER", "MANAGER")
+                
+                // 6. Public API endpoints (remaining product gets, etc.)
+                .requestMatchers("/api/v1/products/**").permitAll()
+                
+                // 7. Everything else requires authentication
                 .anyRequest().authenticated()
             )
             .sessionManagement(session -> session
