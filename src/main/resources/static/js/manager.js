@@ -76,6 +76,8 @@ function setupConsoleUI() {
 
 function registerHandlers() {
     document.getElementById('createProductForm').addEventListener('submit', onCreateProduct);
+    const editForm = document.getElementById('editProductForm');
+    if (editForm) editForm.addEventListener('submit', onEditProduct);
     
     if (currentUserRole === 'MANAGER') {
         document.getElementById('createIngredientForm').addEventListener('submit', onCreateIngredient);
@@ -85,6 +87,8 @@ function registerHandlers() {
             const productId = Number(document.getElementById('bomProductId').value);
             if (productId) loadBomRows(productId);
         });
+        const editIngForm = document.getElementById('editIngredientForm');
+        if (editIngForm) editIngForm.addEventListener('submit', onEditIngredient);
     }
 
     // Tab Filter Handlers
@@ -200,14 +204,24 @@ async function onAdjustStock(e) {
 async function loadCategories() {
     const result = await apiRequest('/api/v1/products/categories');
     const select = document.getElementById('productCategoryId');
-    select.innerHTML = '';
+    const editSelect = document.getElementById('editProductCategoryId');
+    if (select) select.innerHTML = '';
+    if (editSelect) editSelect.innerHTML = '';
     if (!result.ok) return;
 
     result.data.forEach(category => {
-        const option = document.createElement('option');
-        option.value = category.id;
-        option.textContent = category.name;
-        select.appendChild(option);
+        if (select) {
+            const option = document.createElement('option');
+            option.value = category.id;
+            option.textContent = category.name;
+            select.appendChild(option);
+        }
+        if (editSelect) {
+            const option = document.createElement('option');
+            option.value = category.id;
+            option.textContent = category.name;
+            editSelect.appendChild(option);
+        }
     });
 }
 
@@ -239,7 +253,7 @@ function renderProductList() {
     let filtered = managerProducts;
     if (currentUserRole === 'CHEF') {
         if (currentFilter === 'ALL') {
-            filtered = managerProducts.filter(p => p.approvalStatus === 'PENDING' || p.approvalStatus === 'REJECTED');
+            filtered = managerProducts.filter(p => p.approvalStatus === 'PENDING' || p.approvalStatus === 'REJECTED' || p.approvalStatus === 'APPROVED');
         } else {
             filtered = managerProducts.filter(p => p.approvalStatus === currentFilter);
         }
@@ -285,6 +299,13 @@ function renderProductList() {
                 `;
             }
         }
+
+        // Add Edit button for both Manager and Chef
+        actions += `
+            <button type="button" class="action-btn-sm edit-btn" onclick="openEditModal(${product.id})">
+                <i class="fas fa-edit"></i> Edit
+            </button>
+        `;
 
         // If there is rejection feedback, show the "Feedback" button
         if (product.approvalStatus === 'REJECTED' && product.rejectionFeedback) {
@@ -406,6 +427,95 @@ async function loadIngredients() {
 
     const stockIngredient = document.getElementById('stockIngredientId');
     if (stockIngredient) stockIngredient.innerHTML = ingredientOptions;
+
+    renderIngredientList();
+}
+
+function renderIngredientList() {
+    const tableBody = document.getElementById('manageIngredientTableBody');
+    if (!tableBody) return;
+
+    if (managerIngredients.length === 0) {
+        tableBody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:var(--text-gray); padding: 20px 0;">No ingredients found.</td></tr>`;
+        return;
+    }
+
+    tableBody.innerHTML = managerIngredients.map(ing => `
+        <tr>
+            <td><strong>${escapeHtml(ing.name)}</strong></td>
+            <td>${escapeHtml(ing.unit)}</td>
+            <td>${ing.currentStock}</td>
+            <td>${ing.minimumStockThreshold}</td>
+            <td>
+                <div style="display:flex; gap:6px; flex-wrap:wrap;">
+                    <button type="button" class="action-btn-sm edit-btn" onclick="openEditIngredientModal(${ing.id})">
+                        <i class="fas fa-edit"></i> Edit
+                    </button>
+                    <button type="button" class="action-btn-sm reject" onclick="deleteIngredient(${ing.id})">
+                        <i class="fas fa-trash"></i> Delete
+                    </button>
+                </div>
+            </td>
+        </tr>
+    `).join('');
+}
+
+function openEditIngredientModal(id) {
+    const ing = managerIngredients.find(i => i.id === id);
+    if (!ing) return;
+
+    document.getElementById('editIngredientId').value = ing.id;
+    document.getElementById('editIngredientName').value = ing.name;
+    document.getElementById('editIngredientUnit').value = ing.unit;
+    document.getElementById('editIngredientCurrentStock').value = ing.currentStock;
+    document.getElementById('editIngredientMinThreshold').value = ing.minimumStockThreshold;
+
+    const modal = document.getElementById('editIngredientModal');
+    if (modal) modal.style.display = 'flex';
+}
+
+function closeEditIngredientModal() {
+    const modal = document.getElementById('editIngredientModal');
+    if (modal) modal.style.display = 'none';
+    const form = document.getElementById('editIngredientForm');
+    if (form) form.reset();
+}
+
+async function onEditIngredient(e) {
+    e.preventDefault();
+    const form = e.target;
+    const id = Number(form.id.value);
+    const payload = {
+        name: form.name.value.trim(),
+        unit: form.unit.value.trim(),
+        currentStock: Number(form.currentStock.value),
+        minimumStockThreshold: Number(form.minimumStockThreshold.value)
+    };
+
+    const result = await apiRequest(`/api/v1/inventory/ingredients/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+    });
+
+    if (result.ok) {
+        closeEditIngredientModal();
+        await loadIngredients();
+        await loadLowStock();
+    } else {
+        alert('Failed to update ingredient: ' + result.message);
+    }
+}
+
+async function deleteIngredient(id) {
+    if (!confirm('Are you sure you want to delete this ingredient?')) return;
+    const result = await apiRequest(`/api/v1/inventory/ingredients/${id}`, { method: 'DELETE' });
+    if (result.ok) {
+        await loadIngredients();
+        await loadLowStock();
+    } else {
+        alert('Failed to delete ingredient: ' + result.message);
+    }
 }
 
 async function loadBomRows(productId) {
@@ -516,6 +626,58 @@ function setStatus(elementId, ok, message) {
     setTimeout(() => {
         node.classList.remove('show');
     }, 5000);
+}
+
+function openEditModal(id) {
+    const product = managerProducts.find(p => p.id === id);
+    if (!product) return;
+
+    document.getElementById('editProductId').value = product.id;
+    document.getElementById('editProductName').value = product.name;
+    document.getElementById('editProductDescription').value = product.description || '';
+    document.getElementById('editProductBasePrice').value = product.basePrice;
+    document.getElementById('editProductCategoryId').value = product.categoryId;
+    document.getElementById('editProductIsSpecialOffer').checked = product.isSpecialOffer;
+    document.getElementById('editProductIsDailyRecipe').checked = product.isDailyRecipe;
+    document.getElementById('editProductDiscountPrice').value = product.discountPrice !== null && product.discountPrice !== undefined ? product.discountPrice : '';
+
+    const modal = document.getElementById('editProductModal');
+    if (modal) modal.style.display = 'flex';
+}
+
+function closeEditModal() {
+    const modal = document.getElementById('editProductModal');
+    if (modal) modal.style.display = 'none';
+    const form = document.getElementById('editProductForm');
+    if (form) form.reset();
+}
+
+async function onEditProduct(e) {
+    e.preventDefault();
+    const form = e.target;
+    const id = Number(form.id.value);
+    const payload = {
+        name: form.name.value.trim(),
+        description: form.description.value.trim() || null,
+        basePrice: Number(form.basePrice.value),
+        categoryId: Number(form.categoryId.value),
+        isSpecialOffer: form.isSpecialOffer.checked,
+        isDailyRecipe: form.isDailyRecipe.checked,
+        discountPrice: form.discountPrice.value ? Number(form.discountPrice.value) : null
+    };
+
+    const result = await apiRequest(`/api/v1/products/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+    });
+
+    if (result.ok) {
+        closeEditModal();
+        await loadProducts();
+    } else {
+        alert('Failed to edit product: ' + result.message);
+    }
 }
 
 function escapeHtml(value) {

@@ -3,6 +3,7 @@ package com.ramsai.kitchen.services;
 import com.ramsai.kitchen.mappers.CategoryMapper;
 import com.ramsai.kitchen.mappers.ProductMapper;
 import com.ramsai.kitchen.models.dtos.ProductCreateRequest;
+import com.ramsai.kitchen.models.dtos.ProductUpdateRequest;
 import com.ramsai.kitchen.models.dtos.CategoryResponse;
 import com.ramsai.kitchen.models.dtos.ProductResponse;
 import com.ramsai.kitchen.models.entities.Category;
@@ -94,6 +95,32 @@ public class ProductService {
                 .approvalStatus(status)
                 .isActive(status == Product.ApprovalStatus.APPROVED)
                 .build();
+
+        Product saved = productRepository.save(product);
+        return productMapper.toResponse(saved);
+    }
+
+    @Transactional
+    public ProductResponse updateProduct(Long id, ProductUpdateRequest request) {
+        log.info("Updating product with id: {}", id);
+        Product product = productRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Product not found with id: " + id));
+
+        Category category = categoryRepository.findById(request.categoryId())
+                .orElseThrow(() -> new ResourceNotFoundException("Category not found with id: " + request.categoryId()));
+
+        product.setName(request.name().trim());
+        product.setDescription(request.description());
+        product.setBasePrice(request.basePrice());
+        product.setCategory(category);
+        product.setSpecialOffer(Boolean.TRUE.equals(request.isSpecialOffer()));
+        product.setDailyRecipe(Boolean.TRUE.equals(request.isDailyRecipe()));
+        product.setDiscountPrice(request.discountPrice());
+
+        // Reset to pending and inactive
+        product.setApprovalStatus(Product.ApprovalStatus.PENDING);
+        product.setActive(false);
+        product.setRejectionFeedback(null);
 
         Product saved = productRepository.save(product);
         return productMapper.toResponse(saved);

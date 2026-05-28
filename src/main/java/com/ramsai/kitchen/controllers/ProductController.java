@@ -2,6 +2,7 @@ package com.ramsai.kitchen.controllers;
 
 import com.ramsai.kitchen.models.dtos.CategoryResponse;
 import com.ramsai.kitchen.models.dtos.ProductCreateRequest;
+import com.ramsai.kitchen.models.dtos.ProductUpdateRequest;
 import com.ramsai.kitchen.models.dtos.ProductResponse;
 import com.ramsai.kitchen.services.ProductService;
 import jakarta.validation.Valid;
@@ -34,6 +35,17 @@ public class ProductController {
         return ResponseEntity.ok(Map.of(
                 "data", data,
                 "message", "Product created successfully"
+        ));
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<Map<String, Object>> updateProduct(
+            @PathVariable Long id,
+            @Valid @RequestBody ProductUpdateRequest request) {
+        ProductResponse data = productService.updateProduct(id, request);
+        return ResponseEntity.ok(Map.of(
+                "data", data,
+                "message", "Product updated successfully"
         ));
     }
 

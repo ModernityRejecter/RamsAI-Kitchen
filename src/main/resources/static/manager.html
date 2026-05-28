@@ -409,6 +409,15 @@
             background-color: #e5e7eb;
         }
 
+        .action-btn-sm.edit-btn {
+            background-color: #6366f1;
+            color: #ffffff;
+        }
+
+        .action-btn-sm.edit-btn:hover {
+            background-color: #4f46e5;
+        }
+
         /* Modal Styles */
         .modal {
             display: none;
@@ -583,6 +592,19 @@
                 <div class="status-box" id="ingredientStatus"></div>
             </form>
         </div>
+        <!-- Manage Ingredients Card -->
+        <div class="manager-card wide-card" id="manageIngredientCard">
+            <h3><i class="fas fa-leaf"></i> Manage Ingredients</h3>
+            <p>Edit existing ingredients, adjust stock, or delete.</p>
+            <div class="table-wrap" style="max-height:300px;">
+                <table>
+                    <thead>
+                        <tr><th>Name</th><th>Unit</th><th>Current Stock</th><th>Min Threshold</th><th>Actions</th></tr>
+                    </thead>
+                    <tbody id="manageIngredientTableBody"></tbody>
+                </table>
+            </div>
+        </div>
 
         <!-- 3. Recipe Management (BOM) -->
         <div class="manager-card wide-card" id="recipeManagementCard">
@@ -660,6 +682,86 @@
             </div>
         </div>
     </div>
+    <!-- Edit Product Modal -->
+    <div id="editProductModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Edit Product</h3>
+                <button type="button" class="modal-close" onclick="closeEditModal()">&times;</button>
+            </div>
+            <form id="editProductForm" class="manager-form">
+                <input type="hidden" id="editProductId" name="id">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label>Product Name</label>
+                        <input id="editProductName" name="name" placeholder="Product name" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Description</label>
+                        <textarea id="editProductDescription" name="description" placeholder="Short description for the menu..."></textarea>
+                    </div>
+                    <div class="inline-row">
+                        <div class="form-group">
+                            <label>Base Price ($)</label>
+                            <input id="editProductBasePrice" name="basePrice" type="number" step="0.01" min="0.01" placeholder="0.00" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Category</label>
+                            <select id="editProductCategoryId" name="categoryId" required></select>
+                        </div>
+                    </div>
+                    <div class="checkbox-group">
+                        <label><input type="checkbox" id="editProductIsSpecialOffer" name="isSpecialOffer"> Special offer</label>
+                        <label><input type="checkbox" id="editProductIsDailyRecipe" name="isDailyRecipe"> Daily recipe</label>
+                    </div>
+                    <div class="form-group">
+                        <label>Discount Price (Optional)</label>
+                        <input id="editProductDiscountPrice" name="discountPrice" type="number" step="0.01" min="0" placeholder="0.00">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="action-btn-sm feedback-btn" onclick="closeEditModal()" style="padding: 8px 16px;">Cancel</button>
+                    <button type="submit" class="action-btn-sm edit-btn" style="padding: 8px 16px;">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Edit Ingredient Modal -->
+    <div id="editIngredientModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Edit Ingredient</h3>
+                <button type="button" class="modal-close" onclick="closeEditIngredientModal()">&times;</button>
+            </div>
+            <form id="editIngredientForm" class="manager-form">
+                <input type="hidden" id="editIngredientId" name="id">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label>Ingredient Name</label>
+                        <input id="editIngredientName" name="name" placeholder="Name" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Unit</label>
+                        <input id="editIngredientUnit" name="unit" placeholder="Unit" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Current Stock</label>
+                        <input id="editIngredientCurrentStock" name="currentStock" type="number" step="0.01" min="0" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Minimum Threshold</label>
+                        <input id="editIngredientMinThreshold" name="minimumStockThreshold" type="number" step="0.01" min="0" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="action-btn-sm feedback-btn" onclick="closeEditIngredientModal()" style="padding:8px 16px;">Cancel</button>
+                    <button type="submit" class="action-btn-sm edit-btn" style="padding:8px 16px;">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- Rejection Modal -->
     <div id="rejectionModal" class="modal">
         <div class="modal-content">
@@ -682,3 +784,4 @@
 <script src="js/manager.js"></script>
 </body>
 </html>
+
