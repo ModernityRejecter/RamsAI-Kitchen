@@ -7,6 +7,7 @@ let currentTableId = null;
 let currentTableNumber = null;
 let expandedHistoryIds = new Set();
 let refreshTimer = null;
+let myReviewsMap = new Map();
 
 document.addEventListener('DOMContentLoaded', async () => {
     const token = localStorage.getItem('token') || sessionStorage.getItem('token');
@@ -31,7 +32,13 @@ window.addEventListener('beforeunload', () => {
 async function loadAll(showLoading) {
     try {
         await loadCurrentUserId();
-        const [orders, tables] = await Promise.all([fetchMyOrders(), fetchTables()]);
+        const [orders, tables, reviews] = await Promise.all([fetchMyOrders(), fetchTables(), fetchMyReviews()]);
+        
+        myReviewsMap.clear();
+        if (reviews) {
+            reviews.forEach(r => myReviewsMap.set(r.productId, r));
+        }
+
         const occupied = findOccupiedTable(tables, currentUserId);
         currentTableId = occupied ? occupied.id : null;
         currentTableNumber = occupied ? occupied.tableNumber : null;
@@ -70,6 +77,17 @@ async function fetchTables() {
     if (!res.ok) return [];
     const json = await res.json();
     return Array.isArray(json.data) ? json.data : [];
+}
+
+async function fetchMyReviews() {
+    try {
+        const res = await authenticatedFetch('/api/v1/reviews/me');
+        if (!res.ok) return [];
+        const json = await res.json();
+        return Array.isArray(json.data) ? json.data : [];
+    } catch (e) {
+        return [];
+    }
 }
 
 function findOccupiedTable(tables, userId) {
@@ -166,18 +184,34 @@ function renderCurrentOrderCard(order) {
             <div class="order-items">
                 <h5>Items</h5>
                 <ul class="order-items-list-detailed">
-                    ${items.map(renderItemRow).join('') || '<li class="empty-item">No items.</li>'}
+                    ${items.map(i => renderItemRow(i, orderStatus)).join('') || '<li class="empty-item">No items.</li>'}
                 </ul>
             </div>
         </article>
     `;
 }
 
-function renderItemRow(item) {
+function renderItemRow(item, orderStatus) {
     const status = item.itemStatus || 'PENDING';
     const unit = formatMoney(item.unitPrice);
     const line = formatMoney((Number(item.unitPrice) || 0) * (Number(item.quantity) || 0));
     const notes = item.specialNotes ? `<div class="item-notes"><i class="fas fa-note-sticky"></i> ${escapeHtml(item.specialNotes)}</div>` : '';
+    
+    let reviewHtml = '';
+    if (orderStatus === 'SERVED' && item.productId) {
+        const review = myReviewsMap.get(item.productId);
+        if (review) {
+            reviewHtml = `<div class="item-review-status">
+                <span class="rating-stars">★ ${review.rating}</span>
+                <button class="text-btn" onclick="openReviewModal(${item.productId}, '${escapeHtml(item.productName)}', ${review.id}, ${review.rating}, '${escapeHtml(review.comment || '')}')">Edit Review</button>
+            </div>`;
+        } else {
+            reviewHtml = `<div class="item-review-status">
+                <button class="cta-button btn-small" onclick="openReviewModal(${item.productId}, '${escapeHtml(item.productName)}')">Leave a Review</button>
+            </div>`;
+        }
+    }
+
     return `
         <li class="order-item-row">
             <div class="order-item-row-main">
@@ -187,6 +221,7 @@ function renderItemRow(item) {
                 </div>
                 <div class="order-item-row-price">${unit} ea &middot; ${line}</div>
                 ${notes}
+                ${reviewHtml}
             </div>
             ${renderStatusBadge(status, 'item')}
         </li>
@@ -255,7 +290,7 @@ function renderHistoryRow(order) {
             <div class="history-row-details">
                 ${renderOrderProgress(status)}
                 <ul class="order-items-list-detailed">
-                    ${items.map(renderItemRow).join('') || '<li class="empty-item">No items recorded.</li>'}
+                    ${items.map(i => renderItemRow(i, status)).join('') || '<li class="empty-item">No items recorded.</li>'}
                 </ul>
                 <div class="history-row-footer">
                     <span>Last updated ${formatDateTime(order.updatedAt)}</span>
@@ -265,6 +300,121 @@ function renderHistoryRow(order) {
         </article>
     `;
 }
+
+// Review Modal Logic
+function openReviewModal(productId, productName, reviewId = null, existingRating = 5, existingComment = '') {
+    let modal = document.getElementById('reviewModal');
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'reviewModal';
+        modal.className = 'modal-overlay';
+        document.body.appendChild(modal);
+    }
+    
+    modal.innerHTML = `
+        <div class="modal-content review-modal-content">
+            <span class="close-modal" onclick="closeReviewModal()">&times;</span>
+            <h2>Review ${productName}</h2>
+            <form id="reviewForm" onsubmit="submitReview(event, ${productId}, ${reviewId})">
+                <div class="form-group">
+                    <label>Rating (1-5)</label>
+                    <div class="star-rating-input">
+                        ${[1,2,3,4,5].map(i => 
+                            `<i class="fas fa-star star-opt ${i <= existingRating ? 'active' : ''}" data-val="${i}" onclick="setRating(${i})"></i>`
+                        ).join('')}
+                    </div>
+                    <input type="hidden" id="reviewRating" value="${existingRating}">
+                </div>
+                <div class="form-group">
+                    <label>Comment</label>
+                    <textarea id="reviewComment" rows="4" maxlength="500">${existingComment}</textarea>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn-cancel" onclick="closeReviewModal()">Cancel</button>
+                    ${reviewId ? `<button type="button" class="btn-danger" onclick="deleteReview(${reviewId})">Delete</button>` : ''}
+                    <button type="submit" class="btn-primary">Save Review</button>
+                </div>
+            </form>
+        </div>
+    `;
+    modal.style.display = 'flex';
+}
+
+function setRating(val) {
+    document.getElementById('reviewRating').value = val;
+    document.querySelectorAll('.star-rating-input .star-opt').forEach(el => {
+        if (parseInt(el.dataset.val) <= val) {
+            el.classList.add('active');
+        } else {
+            el.classList.remove('active');
+        }
+    });
+}
+
+function closeReviewModal() {
+    const modal = document.getElementById('reviewModal');
+    if (modal) modal.style.display = 'none';
+}
+
+async function submitReview(e, productId, reviewId) {
+    e.preventDefault();
+    const rating = document.getElementById('reviewRating').value;
+    const comment = document.getElementById('reviewComment').value;
+    
+    const payload = {
+        productId: productId,
+        rating: parseInt(rating),
+        comment: comment
+    };
+    
+    try {
+        let url = '/api/v1/reviews';
+        let method = 'POST';
+        if (reviewId) {
+            url = `/api/v1/reviews/${reviewId}`;
+            method = 'PUT';
+        }
+        
+        const res = await authenticatedFetch(url, {
+            method: method,
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(payload)
+        });
+        
+        if (res.ok) {
+            closeReviewModal();
+            showStatus('Review saved successfully.', 'success');
+            loadAll(false);
+        } else {
+            const err = await res.json();
+            alert(err.message || 'Failed to save review');
+        }
+    } catch (e) {
+        alert('Error saving review');
+    }
+}
+
+async function deleteReview(reviewId) {
+    if (!confirm('Are you sure you want to delete this review?')) return;
+    try {
+        const res = await authenticatedFetch(`/api/v1/reviews/${reviewId}`, {
+            method: 'DELETE'
+        });
+        if (res.ok) {
+            closeReviewModal();
+            showStatus('Review deleted.', 'success');
+            loadAll(false);
+        } else {
+            const err = await res.json();
+            alert(err.message || 'Failed to delete review');
+        }
+    } catch (e) {
+        alert('Error deleting review');
+    }
+}
+
 
 function toggleHistoryRow(id) {
     const key = String(id);

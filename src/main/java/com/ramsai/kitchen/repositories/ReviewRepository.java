@@ -6,9 +6,19 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface ReviewRepository extends JpaRepository<Review, Long> {
     @Query("SELECT r.product.id, AVG(r.rating) FROM Review r GROUP BY r.product.id")
     List<Object[]> findAverageRatingsPerProduct();
+
+    List<Review> findByProductIdOrderByCreatedAtDesc(Long productId);
+
+    List<Review> findByCustomerIdOrderByCreatedAtDesc(Long customerId);
+
+    boolean existsByProductIdAndCustomerId(Long productId, Long customerId);
+
+    @Query("SELECT AVG(CAST(r.rating AS double)) FROM Review r WHERE r.product.id = :productId")
+    Double getAverageRatingForProduct(Long productId);
 }
