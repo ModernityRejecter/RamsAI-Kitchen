@@ -14,7 +14,7 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     List<Product> findTop6ByIsActiveTrueOrderByAverageRatingDesc();
 
     List<Product> findAllByCategoryIdAndApprovalStatus(Long categoryId, Product.ApprovalStatus status);
-    List<Product> findAllByIsActiveTrueAndApprovalStatus(Product.ApprovalStatus status);
-    List<Product> findAllByIsDailyRecipeTrueAndIsActiveTrueAndApprovalStatus(Product.ApprovalStatus status);
-    List<Product> findTop6ByIsActiveTrueAndApprovalStatusOrderByAverageRatingDesc(Product.ApprovalStatus status);
+    List<Product> findAllByApprovalStatus(Product.ApprovalStatus status);
+    List<Product> findAllByIsDailyRecipeTrueAndApprovalStatus(Product.ApprovalStatus status);
+    List<Product> findTop6ByApprovalStatusOrderByAverageRatingDesc(Product.ApprovalStatus status);
 }

@@ -39,9 +39,26 @@ public class ProductIngredientService {
         Ingredient ingredient = ingredientRepository.findById(request.ingredientId())
                 .orElseThrow(() -> new ResourceNotFoundException("Ingredient not found with id: " + request.ingredientId()));
 
-        if (productIngredientRepository.existsByProductIdAndIngredientId(productId, request.ingredientId())) {
-            throw new RuntimeException("Ingredient is already assigned to this product.");
+        var existing = productIngredientRepository.findAllByProductId(productId).stream()
+                .filter(pi -> pi.getIngredient().getId().equals(request.ingredientId()))
+                .findFirst();
+
+        if (existing.isPresent()) {
+            ProductIngredient productIngredient = existing.get();
+            productIngredient.setQuantityRequired(request.quantityRequired());
+            
+            product.setApprovalStatus(Product.ApprovalStatus.PENDING);
+            product.setActive(false);
+            product.setRejectionFeedback(null);
+            productRepository.save(product);
+            
+            return toResponse(productIngredientRepository.save(productIngredient));
         }
+
+        product.setApprovalStatus(Product.ApprovalStatus.PENDING);
+        product.setActive(false);
+        product.setRejectionFeedback(null);
+        productRepository.save(product);
 
         ProductIngredient productIngredient = ProductIngredient.builder()
                 .product(product)
@@ -74,6 +91,13 @@ public class ProductIngredientService {
     public void delete(Long id) {
         ProductIngredient productIngredient = productIngredientRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Product ingredient not found with id: " + id));
+
+        Product product = productIngredient.getProduct();
+        product.setApprovalStatus(Product.ApprovalStatus.PENDING);
+        product.setActive(false);
+        product.setRejectionFeedback(null);
+        productRepository.save(product);
+
         productIngredientRepository.delete(productIngredient);
     }
 

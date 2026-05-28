@@ -47,6 +47,8 @@ public class Product {
     @Builder.Default
     private Double averageRating = 0.0;
 
+    private String rejectionFeedback;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     @Builder.Default

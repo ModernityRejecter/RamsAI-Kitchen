@@ -44,28 +44,40 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.PUT, "/api/v1/tables/*/free").authenticated()
                 .requestMatchers(HttpMethod.PUT, "/api/v1/tables/*/occupy").authenticated()
 
-                // 3. Manager specific endpoints
+                // 3. Manager/Chef management endpoints (MUST be before public /api/v1/products/**)
+                .requestMatchers(HttpMethod.PATCH, "/api/v1/products/*/approve").hasRole("MANAGER")
+                .requestMatchers(HttpMethod.PATCH, "/api/v1/products/*/reject").hasRole("MANAGER")
+                .requestMatchers(HttpMethod.PATCH, "/api/v1/products/*/active").hasRole("MANAGER")
+                .requestMatchers(HttpMethod.GET, "/api/v1/products/manage").hasAnyRole("MANAGER", "CHEF")
+                .requestMatchers(HttpMethod.POST, "/api/v1/products/**").hasAnyRole("MANAGER", "CHEF")
+                .requestMatchers(HttpMethod.PUT, "/api/v1/products/**").hasAnyRole("MANAGER", "CHEF")
+                .requestMatchers(HttpMethod.DELETE, "/api/v1/products/**").hasAnyRole("MANAGER", "CHEF")
+
+                // 4. Chef/Manager shared inventory endpoints (product ingredients)
+                .requestMatchers(HttpMethod.GET, "/api/v1/inventory/products/*/ingredients").hasAnyRole("MANAGER", "CHEF")
+                .requestMatchers(HttpMethod.POST, "/api/v1/inventory/products/*/ingredients").hasAnyRole("MANAGER", "CHEF")
+                .requestMatchers(HttpMethod.DELETE, "/api/v1/inventory/product-ingredients/*").hasAnyRole("MANAGER", "CHEF")
+
+                // 5. Other Manager specific endpoints
                 .requestMatchers("/api/v1/manager/**").hasRole("MANAGER")
-                .requestMatchers(HttpMethod.GET, "/api/v1/products/manage").hasRole("MANAGER")
-                .requestMatchers(HttpMethod.POST, "/api/v1/products/**").hasRole("MANAGER")
                 .requestMatchers(HttpMethod.POST, "/api/v1/inventory/**").hasRole("MANAGER")
                 .requestMatchers(HttpMethod.PUT, "/api/v1/inventory/**").hasRole("MANAGER")
                 .requestMatchers(HttpMethod.DELETE, "/api/v1/inventory/**").hasRole("MANAGER")
                 .requestMatchers("/api/v1/inventory/logs/**").hasRole("MANAGER")
                 
-                // 4. Chef/Manager shared endpoints
+                // 5. Chef/Manager shared endpoints
                 .requestMatchers("/api/v1/kitchen/**").hasAnyRole("CHEF", "MANAGER")
                 .requestMatchers("/api/v1/ai/**").hasAnyRole("CHEF", "MANAGER")
                 .requestMatchers("/api/v1/inventory/**").hasAnyRole("CHEF", "MANAGER")
                 
-                // 5. Waiter/Manager shared endpoints
+                // 6. Waiter/Manager shared endpoints
                 .requestMatchers("/api/v1/tables/**").hasAnyRole("WAITER", "MANAGER")
                 .requestMatchers("/api/v1/walls/**").hasAnyRole("WAITER", "MANAGER")
                 
-                // 6. Public API endpoints (remaining product gets, etc.)
+                // 7. Public API endpoints (remaining product gets, etc.)
                 .requestMatchers("/api/v1/products/**").permitAll()
                 
-                // 7. Everything else requires authentication
+                // 8. Everything else requires authentication
                 .anyRequest().authenticated()
             )
             .sessionManagement(session -> session

@@ -81,13 +81,15 @@ class TableServiceTest {
     @Test
     void freeTable_Success() {
         table.setStatus(com.ramsai.kitchen.enums.TableStatus.OCCUPIED);
+        table.setTableNumber(1);
         when(tableRepository.findById(1L)).thenReturn(Optional.of(table));
-        when(tableRepository.save(any(RestaurantTable.class))).thenReturn(table);
+        when(tableRepository.findAll()).thenReturn(java.util.List.of(table));
+        when(tableRepository.saveAll(any())).thenReturn(java.util.List.of(table));
 
         TableResponse response = tableService.freeTable(1L);
 
         assertNotNull(response);
         assertEquals(com.ramsai.kitchen.enums.TableStatus.FREE, table.getStatus());
-        verify(tableRepository).save(table);
+        verify(tableRepository).saveAll(any());
     }
 }

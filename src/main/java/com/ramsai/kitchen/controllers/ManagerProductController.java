@@ -32,47 +32,4 @@ public class ManagerProductController {
         ));
     }
 
-    @PatchMapping("/{id}/approve")
-    public ResponseEntity<Map<String, Object>> approveProduct(@PathVariable Long id) {
-        Product product = productRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Product not found"));
-        product.setApprovalStatus(Product.ApprovalStatus.APPROVED);
-        productRepository.save(product);
-        return ResponseEntity.ok(Map.of(
-                "message", "Product approved successfully"
-        ));
-    }
-
-    @PatchMapping("/{id}/reject")
-    public ResponseEntity<Map<String, Object>> rejectProduct(@PathVariable Long id) {
-        Product product = productRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Product not found"));
-        product.setApprovalStatus(Product.ApprovalStatus.REJECTED);
-        productRepository.save(product);
-        return ResponseEntity.ok(Map.of(
-                "message", "Product rejected successfully"
-        ));
-    }
-
-    @PatchMapping("/{id}/activate")
-    public ResponseEntity<Map<String, Object>> activateProduct(@PathVariable Long id) {
-        Product product = productRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Product not found"));
-        product.setActive(true);
-        productRepository.save(product);
-        return ResponseEntity.ok(Map.of(
-                "message", "Product activated successfully"
-        ));
-    }
-
-    @PatchMapping("/{id}/deactivate")
-    public ResponseEntity<Map<String, Object>> deactivateProduct(@PathVariable Long id) {
-        Product product = productRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Product not found"));
-        product.setActive(false);
-        productRepository.save(product);
-        return ResponseEntity.ok(Map.of(
-                "message", "Product deactivated successfully"
-        ));
-    }
 }

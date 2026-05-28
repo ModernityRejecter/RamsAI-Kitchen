@@ -166,7 +166,7 @@ async function loadTables() {
     let currentUserId = null;
     try {
         const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
-        const authResp = await fetch('/api/v1/auth/me', { headers });
+        const authResp = await fetch('/api/v1/user/me', { headers });
         if (authResp.ok) {
             const authData = await authResp.json();
             currentUserId = authData.data.id;
@@ -309,6 +309,11 @@ function createProductCard(product) {
     const card = document.createElement('div');
     card.className = 'menu-card';
     card.style.position = 'relative';
+
+    if (!product.isActive) {
+        card.style.opacity = '0.7';
+        card.style.filter = 'grayscale(0.5)';
+    }
     
     const dailyBadge = product.isDailyRecipe 
         ? `<div class="daily-badge">Daily Special</div>` 
@@ -318,8 +323,17 @@ function createProductCard(product) {
         ? `<span class="original-price">$${product.basePrice.toFixed(2)}</span> <span class="discount-price">$${product.discountPrice.toFixed(2)}</span>`
         : `<span class="price">$${product.basePrice.toFixed(2)}</span>`;
 
+    const statusOverlay = !product.isActive 
+        ? `<div style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); background:rgba(0,0,0,0.7); color:white; padding:5px 15px; border-radius:20px; z-index:2; font-weight:bold; text-transform:uppercase;">Unavailable</div>` 
+        : '';
+
+    const addBtn = product.isActive 
+        ? `<button class="add-btn" onclick="addToCart(${product.id})"><i class="fas fa-plus"></i> Add</button>`
+        : `<button class="add-btn" disabled style="background:#ccc; cursor:not-allowed;"><i class="fas fa-ban"></i> Add</button>`;
+
     card.innerHTML = `
         ${dailyBadge}
+        ${statusOverlay}
         <div class="menu-card-content">
             <div class="menu-card-header">
                 <h3>${product.name}</h3>
@@ -330,7 +344,7 @@ function createProductCard(product) {
             <p class="description">${product.description || 'No description available.'}</p>
             <div class="menu-card-footer">
                 <div class="price-tag">${priceHtml}</div>
-                <button class="add-btn" onclick="addToCart(${product.id})"><i class="fas fa-plus"></i> Add</button>
+                ${addBtn}
             </div>
         </div>
     `;
