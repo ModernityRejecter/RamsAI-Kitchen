@@ -290,14 +290,46 @@
             gap: 15px;
         }
 
-        #status-message {
-            margin-top: 15px;
+        .status-toast {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            padding: 12px 20px;
+            border-radius: 8px;
             font-weight: 500;
-            height: 24px;
+            z-index: 9999;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s;
+            background: white;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.18);
+            font-size: 0.9rem;
         }
+        .status-toast.show { opacity: 1; }
+        .status-toast.error { color: #e74c3c; border-left: 4px solid #e74c3c; }
+        .status-toast.success { color: #27ae60; border-left: 4px solid #27ae60; }
 
-        .success { color: #27ae60; }
-        .error { color: #e74c3c; }
+        #context-menu {
+            display: none;
+            position: fixed;
+            z-index: 2000;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.18);
+            padding: 4px 0;
+            min-width: 130px;
+        }
+        #ctx-delete {
+            padding: 10px 16px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            color: #e74c3c;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        #ctx-delete:hover { background: #fef0f0; }
     </style>
 </head>
 <body>
@@ -328,8 +360,6 @@
                 <button id="add-wall" class="btn btn-primary">Add Wall</button>
                 <button id="reset-grid" class="btn btn-primary" style="background-color: #e74c3c;">Reset Grid</button>
             </div>
-
-            <div id="status-message"></div>
 
             <div id="floor-plan" class="floor-plan">
                 <!-- Tables will be injected here -->
@@ -396,6 +426,12 @@
             &copy; 2026 Ramsai Kitchen Project.
         </div>
     </footer>
+
+    <div id="context-menu">
+        <div id="ctx-delete"><i class="fa-solid fa-trash-can"></i> Delete</div>
+    </div>
+
+    <div id="status-toast" class="status-toast"></div>
 
     <script src="js/auth.js"></script>
     <script src="js/tables.js"></script>

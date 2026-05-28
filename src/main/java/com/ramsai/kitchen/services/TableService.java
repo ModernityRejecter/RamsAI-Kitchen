@@ -4,6 +4,7 @@ import com.ramsai.kitchen.models.entities.Order;
 import com.ramsai.kitchen.models.entities.RestaurantTable;
 import com.ramsai.kitchen.repositories.OrderRepository;
 import com.ramsai.kitchen.repositories.RestaurantTableRepository;
+import com.ramsai.kitchen.repositories.RestaurantWallRepository;
 import com.ramsai.kitchen.models.dtos.TableResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -18,6 +19,7 @@ import java.util.stream.Collectors;
 public class TableService {
 
     private final RestaurantTableRepository tableRepository;
+    private final RestaurantWallRepository wallRepository;
     private final OrderRepository orderRepository;
 
     @Transactional(readOnly = true)
@@ -45,31 +47,53 @@ public class TableService {
     }
 
     @Transactional
-    public TableResponse addTable() {
+    public TableResponse addTable(Integer xPos, Integer yPos) {
+        if (xPos == null || yPos == null) {
+            throw new RuntimeException("Position is required");
+        }
+        if (tableRepository.findByXposAndYpos(xPos, yPos).isPresent() ||
+                wallRepository.findByXposAndYpos(xPos, yPos).isPresent()) {
+            throw new RuntimeException("Position already occupied");
+        }
         Integer newTableNumber = findSmallestAvailableTableNumber();
-
         RestaurantTable newTable = new RestaurantTable();
         newTable.setTableNumber(newTableNumber);
         newTable.setStatus(com.ramsai.kitchen.enums.TableStatus.FREE);
-        // Find first available free spot (0,0) or some generic spot, UI can handle drag
-        newTable.setXpos(0);
-        newTable.setYpos(0);
-        
-        // Ensure no overlap at 0,0, if overlap we could search, but for prototype let's just place it at 0,0.
-        // Actually, we'll try to find a free spot
-        int x = 0, y = 0;
-        while (tableRepository.findByXposAndYpos(x, y).isPresent()) {
-            x++;
-            if (x > 14) {
-                x = 0;
-                y++;
-            }
-        }
-        newTable.setXpos(x);
-        newTable.setYpos(y);
-
+        newTable.setXpos(xPos);
+        newTable.setYpos(yPos);
         RestaurantTable saved = tableRepository.save(newTable);
         return mapToTableResponse(saved);
+    }
+
+    @Transactional
+    public void deleteTableSquare(Long id) {
+        RestaurantTable table = tableRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Table not found"));
+
+        if (table.getStatus() == com.ramsai.kitchen.enums.TableStatus.OCCUPIED) {
+            throw new RuntimeException("Cannot delete an occupied table. Free it first.");
+        }
+
+        Integer tableNumber = table.getTableNumber();
+        tableRepository.delete(table);
+
+        List<RestaurantTable> remaining = tableRepository.findAll().stream()
+                .filter(t -> t.getTableNumber().equals(tableNumber))
+                .collect(Collectors.toList());
+
+        if (remaining.size() > 1) {
+            List<List<RestaurantTable>> components = findConnectedComponents(remaining);
+            if (components.size() > 1) {
+                components.sort((a, b) -> b.size() - a.size());
+                for (int i = 1; i < components.size(); i++) {
+                    Integer newNumber = findSmallestAvailableTableNumber();
+                    for (RestaurantTable t : components.get(i)) {
+                        t.setTableNumber(newNumber);
+                        tableRepository.save(t);
+                    }
+                }
+            }
+        }
     }
 
     @Transactional
@@ -77,11 +101,14 @@ public class TableService {
         RestaurantTable table = tableRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Table not found"));
 
-        // Check for overlap
         tableRepository.findByXposAndYpos(xPos, yPos).ifPresent(otherTable -> {
             if (!otherTable.getId().equals(id)) {
                 throw new RuntimeException("Another table already exists at this position");
             }
+        });
+
+        wallRepository.findByXposAndYpos(xPos, yPos).ifPresent(wall -> {
+            throw new RuntimeException("A wall already exists at this position");
         });
 
         Integer oldTableNumber = table.getTableNumber();

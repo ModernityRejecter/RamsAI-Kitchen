@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
+import java.util.HashMap;
 
 @RestController
 @RequestMapping("/api/v1/walls")
@@ -28,8 +29,14 @@ public class WallController {
     }
 
     @PostMapping
-    public ResponseEntity<Map<String, Object>> addWall() {
-        WallResponse data = wallService.addWall();
+    public ResponseEntity<Map<String, Object>> addWall(
+            @RequestBody(required = false) Map<String, Integer> body) {
+        Integer xPos = body != null ? body.get("xPos") : null;
+        Integer yPos = body != null ? body.get("yPos") : null;
+        if (xPos == null || yPos == null) {
+            return ResponseEntity.badRequest().body(Map.of("message", "xPos and yPos are required"));
+        }
+        WallResponse data = wallService.addWall(xPos, yPos);
         return ResponseEntity.ok(Map.of(
                 "data", data,
                 "message", "Wall created successfully"
@@ -45,5 +52,11 @@ public class WallController {
                 "data", data,
                 "message", "Wall position updated successfully"
         ));
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Map<String, Object>> deleteWall(@PathVariable Long id) {
+        wallService.deleteWall(id);
+        return ResponseEntity.ok(Map.of("message", "Wall deleted successfully"));
     }
 }
