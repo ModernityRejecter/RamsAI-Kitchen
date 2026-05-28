@@ -19,4 +19,6 @@ public interface OrderItemRepository extends JpaRepository<OrderItem, Long> {
 
     @Query("SELECT p.id, SUM(oi.quantity) as totalQty FROM OrderItem oi JOIN oi.product p GROUP BY p.id ORDER BY totalQty DESC")
     List<Object[]> findPopularProducts();
+
+    boolean existsByProductId(Long productId);
 }

@@ -43,6 +43,11 @@ public class ProductIngredientService {
             throw new RuntimeException("Ingredient is already assigned to this product.");
         }
 
+        product.setApprovalStatus(Product.ApprovalStatus.PENDING);
+        product.setActive(false);
+        product.setRejectionFeedback(null);
+        productRepository.save(product);
+
         ProductIngredient productIngredient = ProductIngredient.builder()
                 .product(product)
                 .ingredient(ingredient)

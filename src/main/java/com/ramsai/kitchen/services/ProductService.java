@@ -11,6 +11,7 @@ import com.ramsai.kitchen.models.entities.Product;
 import com.ramsai.kitchen.exceptions.ResourceNotFoundException;
 import com.ramsai.kitchen.models.entities.User;
 import com.ramsai.kitchen.repositories.CategoryRepository;
+import com.ramsai.kitchen.repositories.OrderItemRepository;
 import com.ramsai.kitchen.repositories.ProductRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -29,6 +30,7 @@ public class ProductService {
 
     private final ProductRepository productRepository;
     private final CategoryRepository categoryRepository;
+    private final OrderItemRepository orderItemRepository;
     private final ProductMapper productMapper;
     private final CategoryMapper categoryMapper;
 
@@ -158,5 +160,18 @@ public class ProductService {
         }
         product.setActive(isActive);
         return productMapper.toResponse(productRepository.save(product));
+    }
+
+    @Transactional
+    public void deleteProduct(Long id) {
+        log.info("Deleting product with id: {}", id);
+        Product product = productRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Product not found with id: " + id));
+        
+        if (orderItemRepository.existsByProductId(id)) {
+            throw new RuntimeException("Cannot delete product used in orders.");
+        }
+        
+        productRepository.delete(product);
     }
 }

@@ -300,10 +300,13 @@ function renderProductList() {
             }
         }
 
-        // Add Edit button for both Manager and Chef
+        // Add Edit and Delete buttons for both Manager and Chef
         actions += `
             <button type="button" class="action-btn-sm edit-btn" onclick="openEditModal(${product.id})">
                 <i class="fas fa-edit"></i> Edit
+            </button>
+            <button type="button" class="action-btn-sm reject" onclick="deleteProduct(${product.id})">
+                <i class="fas fa-trash"></i> Delete
             </button>
         `;
 
@@ -410,6 +413,16 @@ async function toggleActive(id, isActive) {
         await loadProducts();
     } else {
         alert('Failed to update product status: ' + result.message);
+    }
+}
+
+async function deleteProduct(id) {
+    if (!confirm('Are you sure you want to delete this product? This cannot be undone.')) return;
+    const result = await apiRequest(`/api/v1/products/${id}`, { method: 'DELETE' });
+    if (result.ok) {
+        await loadProducts();
+    } else {
+        alert('Failed to delete product: ' + result.message);
     }
 }
 
