@@ -630,30 +630,6 @@
             </div>
         </div>
 
-        <!-- 4. Stock Adjustment -->
-        <div class="manager-card" id="stockAdjustmentCard">
-            <h3><i class="fas fa-sync-alt"></i> Stock Adjustment</h3>
-            <p>Manually correct inventory levels for restocks or waste.</p>
-            <form id="adjustStockForm" class="manager-form">
-                <select id="stockIngredientId" required></select>
-                <div class="inline-row">
-                    <div class="form-group">
-                        <label>Quantity</label>
-                        <input id="stockQuantity" type="number" step="0.01" min="0.01" placeholder="0.00" required>
-                    </div>
-                    <div class="form-group">
-                        <label>Reason</label>
-                        <select id="stockReason" required>
-                            <option value="RESTOCK">RESTOCK</option>
-                            <option value="WASTE">WASTE</option>
-                        </select>
-                    </div>
-                </div>
-                <button type="submit">Apply Adjustment</button>
-                <div class="status-box" id="stockStatus"></div>
-            </form>
-        </div>
-
         <!-- 5. Low Stock Alert -->
         <div class="manager-card">
             <h3><i class="fas fa-exclamation-triangle"></i> Low Stock Alerts</h3>
@@ -664,20 +640,6 @@
                     <tr><th>Ingredient</th><th>Current</th><th>Min</th><th>Unit</th></tr>
                     </thead>
                     <tbody id="lowStockTable"></tbody>
-                </table>
-            </div>
-        </div>
-
-        <!-- 6. Inventory Logs -->
-        <div class="manager-card wide-card" id="inventoryLogsCard">
-            <h3><i class="fas fa-history"></i> Recent Inventory Logs</h3>
-            <p>A trail of all stock movements and adjustments.</p>
-            <div class="table-wrap">
-                <table>
-                    <thead>
-                    <tr><th>Ingredient</th><th>Change</th><th>Reason</th><th>Time</th></tr>
-                    </thead>
-                    <tbody id="inventoryLogsTable"></tbody>
                 </table>
             </div>
         </div>

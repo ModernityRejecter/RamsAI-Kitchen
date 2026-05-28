@@ -43,7 +43,7 @@ public class ProductIngredientServiceTest {
 
         when(productRepository.findById(productId)).thenReturn(Optional.of(product));
         when(ingredientRepository.findById(2L)).thenReturn(Optional.of(ingredient));
-        when(productIngredientRepository.existsByProductIdAndIngredientId(productId, 2L)).thenReturn(false);
+        when(productIngredientRepository.findAllByProductId(productId)).thenReturn(java.util.Collections.emptyList());
 
         ProductIngredient savedProductIngredient = new ProductIngredient();
         savedProductIngredient.setProduct(product);

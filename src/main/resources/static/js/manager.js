@@ -33,9 +33,6 @@ async function bootstrapManagerPage() {
         loadLowStock(),
         loadIngredients()
     ];
-    if (currentUserRole === 'MANAGER') {
-        promises.push(loadInventoryLogs());
-    }
     await Promise.all(promises);
     setupConsoleUI();
 }
@@ -57,9 +54,7 @@ function setupConsoleUI() {
         // Hide Manager-only cards
         const managerCards = [
             'createIngredientCard',
-            'manageIngredientCard',
-            'stockAdjustmentCard',
-            'inventoryLogsCard'
+            'manageIngredientCard'
         ];
         managerCards.forEach(id => {
             const node = document.getElementById(id);
@@ -87,7 +82,6 @@ function registerHandlers() {
 
     if (currentUserRole === 'MANAGER') {
         document.getElementById('createIngredientForm').addEventListener('submit', onCreateIngredient);
-        document.getElementById('adjustStockForm').addEventListener('submit', onAdjustStock);
         const editIngForm = document.getElementById('editIngredientForm');
         if (editIngForm) editIngForm.addEventListener('submit', onEditIngredient);
     }
@@ -180,25 +174,7 @@ async function onAddBomRow(e) {
     if (result.ok) {
         document.getElementById('bomQuantityRequired').value = '';
         await loadBomRows(productId);
-    }
-}
-
-async function onAdjustStock(e) {
-    e.preventDefault();
-    const ingredientId = Number(document.getElementById('stockIngredientId').value);
-    const payload = {
-        quantity: Number(document.getElementById('stockQuantity').value),
-        reason: document.getElementById('stockReason').value
-    };
-    const result = await apiRequest(`/api/v1/inventory/ingredients/${ingredientId}/stock`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-    });
-    setStatus('stockStatus', result.ok, result.message || 'Stock update finished.');
-    if (result.ok) {
-        document.getElementById('stockQuantity').value = '';
-        await Promise.all([loadIngredients(), loadLowStock(), loadInventoryLogs()]);
+        await loadProducts();
     }
 }
 
@@ -586,29 +562,6 @@ async function loadLowStock() {
             <td>${row.currentStock}</td>
             <td>${row.minimumStockThreshold}</td>
             <td>${escapeHtml(row.unit)}</td>
-        </tr>
-    `).join('');
-}
-
-async function loadInventoryLogs() {
-    const result = await apiRequest('/api/v1/inventory/logs');
-    const tableBody = document.getElementById('inventoryLogsTable');
-    if (!tableBody) return;
-    if (!result.ok) {
-        tableBody.innerHTML = '<tr><td colspan="4">Failed to load logs.</td></tr>';
-        return;
-    }
-    const rows = result.data || [];
-    if (rows.length === 0) {
-        tableBody.innerHTML = '<tr><td colspan="4">No inventory logs yet.</td></tr>';
-        return;
-    }
-    tableBody.innerHTML = rows.map(log => `
-        <tr>
-            <td>${escapeHtml(log.ingredientName)}</td>
-            <td>${log.changeAmount}</td>
-            <td>${escapeHtml(log.reason)}</td>
-            <td>${new Date(log.timestamp).toLocaleString()}</td>
         </tr>
     `).join('');
 }
