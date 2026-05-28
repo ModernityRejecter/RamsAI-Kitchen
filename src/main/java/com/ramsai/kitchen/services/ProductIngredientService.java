@@ -79,6 +79,13 @@ public class ProductIngredientService {
     public void delete(Long id) {
         ProductIngredient productIngredient = productIngredientRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Product ingredient not found with id: " + id));
+
+        Product product = productIngredient.getProduct();
+        product.setApprovalStatus(Product.ApprovalStatus.PENDING);
+        product.setActive(false);
+        product.setRejectionFeedback(null);
+        productRepository.save(product);
+
         productIngredientRepository.delete(productIngredient);
     }
 

@@ -30,10 +30,10 @@ async function bootstrapManagerPage() {
     const promises = [
         loadCategories(),
         loadProducts(),
-        loadLowStock()
+        loadLowStock(),
+        loadIngredients()
     ];
     if (currentUserRole === 'MANAGER') {
-        promises.push(loadIngredients());
         promises.push(loadInventoryLogs());
     }
     await Promise.all(promises);
@@ -57,7 +57,7 @@ function setupConsoleUI() {
         // Hide Manager-only cards
         const managerCards = [
             'createIngredientCard',
-            'recipeManagementCard',
+            'manageIngredientCard',
             'stockAdjustmentCard',
             'inventoryLogsCard'
         ];
@@ -79,14 +79,15 @@ function registerHandlers() {
     const editForm = document.getElementById('editProductForm');
     if (editForm) editForm.addEventListener('submit', onEditProduct);
     
+    document.getElementById('addBomForm').addEventListener('submit', onAddBomRow);
+    document.getElementById('bomProductId').addEventListener('change', () => {
+        const productId = Number(document.getElementById('bomProductId').value);
+        if (productId) loadBomRows(productId);
+    });
+
     if (currentUserRole === 'MANAGER') {
         document.getElementById('createIngredientForm').addEventListener('submit', onCreateIngredient);
-        document.getElementById('addBomForm').addEventListener('submit', onAddBomRow);
         document.getElementById('adjustStockForm').addEventListener('submit', onAdjustStock);
-        document.getElementById('bomProductId').addEventListener('change', () => {
-            const productId = Number(document.getElementById('bomProductId').value);
-            if (productId) loadBomRows(productId);
-        });
         const editIngForm = document.getElementById('editIngredientForm');
         if (editIngForm) editIngForm.addEventListener('submit', onEditIngredient);
     }
@@ -231,7 +232,7 @@ async function loadProducts() {
     managerProducts = result.data || [];
 
     const bomProduct = document.getElementById('bomProductId');
-    if (bomProduct && currentUserRole === 'MANAGER') {
+    if (bomProduct) {
         bomProduct.innerHTML = managerProducts.map(product =>
             `<option value="${product.id}">${escapeHtml(product.name)}</option>`
         ).join('');
@@ -562,6 +563,7 @@ async function removeBomRow(rowId, productId) {
     setStatus('bomStatus', result.ok, result.message || 'Recipe row delete finished.');
     if (result.ok) {
         await loadBomRows(productId);
+        await loadProducts();
     }
 }
 

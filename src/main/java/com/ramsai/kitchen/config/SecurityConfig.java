@@ -53,7 +53,12 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.PUT, "/api/v1/products/**").hasAnyRole("MANAGER", "CHEF")
                 .requestMatchers(HttpMethod.DELETE, "/api/v1/products/**").hasAnyRole("MANAGER", "CHEF")
 
-                // 4. Other Manager specific endpoints
+                // 4. Chef/Manager shared inventory endpoints (product ingredients)
+                .requestMatchers(HttpMethod.GET, "/api/v1/inventory/products/*/ingredients").hasAnyRole("MANAGER", "CHEF")
+                .requestMatchers(HttpMethod.POST, "/api/v1/inventory/products/*/ingredients").hasAnyRole("MANAGER", "CHEF")
+                .requestMatchers(HttpMethod.DELETE, "/api/v1/inventory/product-ingredients/*").hasAnyRole("MANAGER", "CHEF")
+
+                // 5. Other Manager specific endpoints
                 .requestMatchers("/api/v1/manager/**").hasRole("MANAGER")
                 .requestMatchers(HttpMethod.POST, "/api/v1/inventory/**").hasRole("MANAGER")
                 .requestMatchers(HttpMethod.PUT, "/api/v1/inventory/**").hasRole("MANAGER")
