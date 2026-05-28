@@ -60,6 +60,7 @@ public class SecurityConfig {
                 
                 // 5. Waiter/Manager shared endpoints
                 .requestMatchers("/api/v1/tables/**").hasAnyRole("WAITER", "MANAGER")
+                .requestMatchers("/api/v1/walls/**").hasAnyRole("WAITER", "MANAGER")
                 
                 // 6. Public API endpoints (remaining product gets, etc.)
                 .requestMatchers("/api/v1/products/**").permitAll()

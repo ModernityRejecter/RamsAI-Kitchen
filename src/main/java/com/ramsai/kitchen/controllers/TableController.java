@@ -30,12 +30,24 @@ public class TableController {
     }
 
     @PostMapping
-    public ResponseEntity<Map<String, Object>> addTable() {
-        TableResponse data = tableService.addTable();
+    public ResponseEntity<Map<String, Object>> addTable(
+            @RequestBody(required = false) Map<String, Integer> body) {
+        Integer xPos = body != null ? body.get("xPos") : null;
+        Integer yPos = body != null ? body.get("yPos") : null;
+        if (xPos == null || yPos == null) {
+            return ResponseEntity.badRequest().body(Map.of("message", "xPos and yPos are required"));
+        }
+        TableResponse data = tableService.addTable(xPos, yPos);
         return ResponseEntity.ok(Map.of(
                 "data", data,
                 "message", "Table created successfully"
         ));
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Map<String, Object>> deleteTableSquare(@PathVariable Long id) {
+        tableService.deleteTableSquare(id);
+        return ResponseEntity.ok(Map.of("message", "Table square deleted successfully"));
     }
 
     @PutMapping("/{id}/position")

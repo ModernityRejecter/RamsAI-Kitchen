@@ -2,6 +2,7 @@ package com.ramsai.kitchen.services;
 
 import com.ramsai.kitchen.models.dtos.WallResponse;
 import com.ramsai.kitchen.models.entities.RestaurantWall;
+import com.ramsai.kitchen.repositories.RestaurantTableRepository;
 import com.ramsai.kitchen.repositories.RestaurantWallRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -15,6 +16,7 @@ import java.util.stream.Collectors;
 public class WallService {
 
     private final RestaurantWallRepository wallRepository;
+    private final RestaurantTableRepository tableRepository;
 
     @Transactional(readOnly = true)
     public List<WallResponse> getAllWalls() {
@@ -24,20 +26,14 @@ public class WallService {
     }
 
     @Transactional
-    public WallResponse addWall() {
-        RestaurantWall newWall = new RestaurantWall();
-        
-        int x = 0, y = 0;
-        while (wallRepository.findByXposAndYpos(x, y).isPresent()) {
-            x++;
-            if (x > 14) {
-                x = 0;
-                y++;
-            }
+    public WallResponse addWall(Integer xPos, Integer yPos) {
+        if (wallRepository.findByXposAndYpos(xPos, yPos).isPresent() ||
+                tableRepository.findByXposAndYpos(xPos, yPos).isPresent()) {
+            throw new RuntimeException("Position already occupied");
         }
-        newWall.setXpos(x);
-        newWall.setYpos(y);
-
+        RestaurantWall newWall = new RestaurantWall();
+        newWall.setXpos(xPos);
+        newWall.setYpos(yPos);
         RestaurantWall saved = wallRepository.save(newWall);
         return mapToWallResponse(saved);
     }
@@ -53,10 +49,21 @@ public class WallService {
             }
         });
 
+        tableRepository.findByXposAndYpos(xPos, yPos).ifPresent(table -> {
+            throw new RuntimeException("A table already exists at this position");
+        });
+
         wall.setXpos(xPos);
         wall.setYpos(yPos);
         RestaurantWall savedWall = wallRepository.save(wall);
         return mapToWallResponse(savedWall);
+    }
+
+    @Transactional
+    public void deleteWall(Long id) {
+        wallRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Wall not found"));
+        wallRepository.deleteById(id);
     }
 
     private WallResponse mapToWallResponse(RestaurantWall wall) {

@@ -1,6 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
     const floorPlan = document.getElementById('floor-plan');
-    const statusMessage = document.getElementById('status-message');
     const addTableBtn = document.getElementById('add-table');
     const addWallBtn = document.getElementById('add-wall');
     const resetGridBtn = document.getElementById('reset-grid');
@@ -23,6 +22,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let dragStartX = 0, dragStartY = 0;
     let didDrag = false;
     let currentUserId = null;
+    let contextTarget = null;
 
     const userRole = localStorage.getItem('role') || sessionStorage.getItem('role');
     const isManagerOrWaiter = userRole === 'MANAGER' || userRole === 'WAITER';
@@ -38,6 +38,42 @@ document.addEventListener('DOMContentLoaded', () => {
         gridRowsInput.value = gridRows;
     }
 
+    // Context menu wiring
+    const contextMenu = document.getElementById('context-menu');
+    document.getElementById('ctx-delete').addEventListener('click', async () => {
+        contextMenu.style.display = 'none';
+        if (!contextTarget) return;
+        const { id, elementType, tableNumber } = contextTarget;
+        const endpoint = elementType === 'table' ? `/api/v1/tables/${id}` : `/api/v1/walls/${id}`;
+        try {
+            const response = await authenticatedFetch(endpoint, { method: 'DELETE' });
+            if (response.ok) {
+                if (elementType === 'table' && tableNumber === selectedGroupNumber) {
+                    selectedGroupNumber = null;
+                    document.getElementById('selectionDetails').style.display = 'none';
+                }
+                fetchElements();
+            } else {
+                const result = await response.json().catch(() => ({}));
+                showToast(result.message || 'Could not delete element', 'error');
+            }
+        } catch (e) {
+            showToast('Connection error', 'error');
+        }
+        contextTarget = null;
+    });
+
+    document.addEventListener('click', () => { contextMenu.style.display = 'none'; });
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') contextMenu.style.display = 'none'; });
+
+    function showToast(message, type) {
+        const toast = document.getElementById('status-toast');
+        toast.textContent = message;
+        toast.className = `status-toast ${type} show`;
+        clearTimeout(toast._timer);
+        toast._timer = setTimeout(() => { toast.className = 'status-toast'; }, 3000);
+    }
+
     function initGrid() {
         floorPlan.innerHTML = '';
         floorPlan.style.gridTemplateColumns = `repeat(${gridCols}, ${CELL_SIZE}px)`;
@@ -51,6 +87,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 floorPlan.appendChild(cell);
             }
         }
+    }
+
+    function findFirstFreeCell() {
+        const occupied = new Set(elements.map(e => `${e.xPos ?? e.xpos},${e.yPos ?? e.ypos}`));
+        for (let y = 0; y < gridRows; y++) {
+            for (let x = 0; x < gridCols; x++) {
+                if (!occupied.has(`${x},${y}`)) return { x, y };
+            }
+        }
+        return null;
     }
 
     async function fetchElements() {
@@ -72,11 +118,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 computeWallEdges();
                 renderElements();
                 populateSidePanelList();
-            } else {
-                showStatus('Failed to fetch elements', 'error');
             }
         } catch (error) {
-            showStatus('Error connecting to server', 'error');
+            showToast('Error connecting to server', 'error');
         }
     }
 
@@ -95,13 +139,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 };
             }
             tableGroups[t.tableNumber].squares.push(t);
-            // Keep the smallest id for stability
             if (t.id < tableGroups[t.tableNumber].id) {
                 tableGroups[t.tableNumber].id = t.id;
             }
         });
 
-        // Calculate edges (which sides are exposed = no same-group neighbor)
         Object.values(tableGroups).forEach(group => {
             let capacity = 0;
             group.squares.forEach(sq => {
@@ -134,7 +176,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function applyCornerClasses(domEl, edges) {
-        // A corner is rounded only if both adjacent edges are exposed.
         if (!(edges.top && edges.left))     domEl.classList.add('no-tl');
         if (!(edges.top && edges.right))    domEl.classList.add('no-tr');
         if (!(edges.bottom && edges.left))  domEl.classList.add('no-bl');
@@ -197,6 +238,17 @@ document.addEventListener('DOMContentLoaded', () => {
                 domEl.addEventListener('mousedown', startDragging);
             } else {
                 domEl.style.cursor = 'pointer';
+            }
+
+            if (isManager) {
+                domEl.addEventListener('contextmenu', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    contextTarget = element;
+                    contextMenu.style.display = 'block';
+                    contextMenu.style.left = e.clientX + 'px';
+                    contextMenu.style.top = e.clientY + 'px';
+                });
             }
 
             domEl.addEventListener('click', (e) => handleTableClick(e, element));
@@ -287,12 +339,10 @@ document.addEventListener('DOMContentLoaded', () => {
             occupyBtn.style.display = 'block';
             selectBtn.style.display = 'block';
         } else if (isSelfOccupied) {
-            // User can free their own table
             freeBtn.style.display = 'block';
             freeBtn.textContent = 'Leave Table';
             selectBtn.style.display = 'block';
         } else if (isManagerOrWaiter) {
-            // Staff can free others' tables
             freeBtn.style.display = 'block';
             freeBtn.textContent = 'Free Table';
         }
@@ -306,17 +356,16 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             const response = await authenticatedFetch(`/api/v1/tables/${firstSquareId}/occupy`, { method: 'PUT' });
             if (response.ok) {
-                showStatus(`Table ${tableNumber} occupied.`, 'success');
                 sessionStorage.setItem('selectedTableId', firstSquareId);
                 sessionStorage.setItem('selectedTableNumber', tableNumber);
                 await fetchElements();
                 selectGroup(tableNumber);
             } else {
                 const result = await response.json().catch(() => ({}));
-                showStatus(result.message || 'Could not occupy table', 'error');
+                showToast(result.message || 'Could not occupy table', 'error');
             }
         } catch (err) {
-            showStatus('Error occupying table', 'error');
+            showToast('Error occupying table', 'error');
         }
     }
 
@@ -331,21 +380,19 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             const response = await authenticatedFetch(`/api/v1/tables/${firstSquareId}/free`, { method: 'PUT' });
             if (response.ok) {
-                showStatus(`Table ${tableNumber} freed.`, 'success');
                 await fetchElements();
                 selectGroup(tableNumber);
             } else {
-                showStatus('Could not free table', 'error');
+                showToast('Could not free table', 'error');
             }
         } catch (err) {
-            showStatus('Error freeing table', 'error');
+            showToast('Error freeing table', 'error');
         }
     }
 
     function selectForOrderAction(firstSquareId, tableNumber) {
         sessionStorage.setItem('selectedTableId', firstSquareId);
         sessionStorage.setItem('selectedTableNumber', tableNumber);
-        showStatus(`Table ${tableNumber} selected!`, 'success');
 
         const btn = document.getElementById('selectTableBtn');
         btn.textContent = 'Selected ✓';
@@ -431,11 +478,8 @@ document.addEventListener('DOMContentLoaded', () => {
         document.removeEventListener('mousemove', drag);
         document.removeEventListener('mouseup', stopDragging);
 
-        // Fix drop glitch: move element into target cell FIRST (while still position:absolute
-        // from the dragging class), then strip the class. Removing the class before reparenting
-        // briefly lets the element flow into floorPlan's grid at the wrong spot.
         if (isOverlap) {
-            showStatus('Cannot place here: Overlap detected!', 'error');
+            showToast('Cannot place here: overlap detected', 'error');
             const originalCell = floorPlan.querySelector(`.grid-cell[data-x="${element.xPos}"][data-y="${element.yPos}"]`);
             if (originalCell) originalCell.appendChild(draggedElement);
             draggedElement.classList.remove('dragging');
@@ -485,43 +529,60 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const result = await response.json();
             if (response.ok) {
-                showStatus('Layout saved', 'success');
                 return true;
             } else {
-                showStatus('Error saving: ' + (result.message || 'Server error'), 'error');
+                showToast('Error saving: ' + (result.message || 'Server error'), 'error');
                 return false;
             }
         } catch (error) {
-            showStatus('Connection error', 'error');
+            showToast('Connection error', 'error');
             return false;
         }
     }
 
     addTableBtn.addEventListener('click', async () => {
+        const pos = findFirstFreeCell();
+        if (!pos) {
+            showToast('Grid is full — resize it to add more tables', 'error');
+            return;
+        }
         try {
-            const response = await authenticatedFetch('/api/v1/tables', { method: 'POST' });
+            const response = await authenticatedFetch('/api/v1/tables', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ xPos: pos.x, yPos: pos.y })
+            });
             if (response.ok) {
-                showStatus('Table added', 'success');
                 fetchElements();
             } else {
-                showStatus('Error adding table', 'error');
+                const result = await response.json().catch(() => ({}));
+                showToast(result.message || 'Error adding table', 'error');
             }
         } catch (error) {
-            showStatus('Connection error', 'error');
+            showToast('Connection error', 'error');
         }
     });
 
     addWallBtn.addEventListener('click', async () => {
+        const pos = findFirstFreeCell();
+        if (!pos) {
+            showToast('Grid is full — resize it to add more walls', 'error');
+            return;
+        }
         try {
-            const response = await authenticatedFetch('/api/v1/walls', { method: 'POST' });
+            const response = await authenticatedFetch('/api/v1/walls', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ xPos: pos.x, yPos: pos.y })
+            });
             if (response.ok) {
-                showStatus('Wall added', 'success');
                 fetchElements();
             } else {
-                showStatus('Error adding wall', 'error');
+                const result = await response.json().catch(() => ({}));
+                showToast(result.message || 'Error adding wall', 'error');
             }
         } catch (error) {
-            showStatus('Connection error', 'error');
+            showToast('Connection error', 'error');
         }
     });
 
@@ -530,13 +591,12 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             const response = await authenticatedFetch('/api/v1/layout/reset', { method: 'DELETE' });
             if (response.ok) {
-                showStatus('Grid reset successfully', 'success');
                 fetchElements();
             } else {
-                showStatus('Error resetting grid', 'error');
+                showToast('Error resetting grid', 'error');
             }
         } catch (error) {
-            showStatus('Connection error', 'error');
+            showToast('Connection error', 'error');
         }
     });
 
@@ -548,11 +608,11 @@ document.addEventListener('DOMContentLoaded', () => {
             const maxX = elements.reduce((m, el) => Math.max(m, el.xPos ?? el.xpos ?? 0), 0);
             const maxY = elements.reduce((m, el) => Math.max(m, el.yPos ?? el.ypos ?? 0), 0);
             if (newCols <= maxX) {
-                showStatus(`A table/wall sits at column ${maxX}. Move it before shrinking below ${maxX + 1} columns.`, 'error');
+                alert(`A table/wall sits at column ${maxX}. Move it before shrinking below ${maxX + 1} columns.`);
                 return;
             }
             if (newRows <= maxY) {
-                showStatus(`A table/wall sits at row ${maxY}. Move it before shrinking below ${maxY + 1} rows.`, 'error');
+                alert(`A table/wall sits at row ${maxY}. Move it before shrinking below ${maxY + 1} rows.`);
                 return;
             }
 
@@ -565,17 +625,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             initGrid();
             renderElements();
-            showStatus(`Grid resized to ${gridCols}x${gridRows}`, 'success');
         });
-    }
-
-    function showStatus(message, type) {
-        statusMessage.innerText = message;
-        statusMessage.className = type;
-        setTimeout(() => {
-            statusMessage.innerText = '';
-            statusMessage.className = '';
-        }, 3000);
     }
 
     async function loadCurrentUserId() {
