@@ -49,7 +49,9 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.PATCH, "/api/v1/products/*/reject").hasRole("MANAGER")
                 .requestMatchers(HttpMethod.PATCH, "/api/v1/products/*/active").hasRole("MANAGER")
                 .requestMatchers(HttpMethod.GET, "/api/v1/products/manage").hasAnyRole("MANAGER", "CHEF")
-                .requestMatchers(HttpMethod.POST, "/api/v1/products").hasAnyRole("MANAGER", "CHEF")
+                .requestMatchers(HttpMethod.POST, "/api/v1/products/**").hasAnyRole("MANAGER", "CHEF")
+                .requestMatchers(HttpMethod.PUT, "/api/v1/products/**").hasAnyRole("MANAGER", "CHEF")
+                .requestMatchers(HttpMethod.DELETE, "/api/v1/products/**").hasAnyRole("MANAGER", "CHEF")
 
                 // 4. Other Manager specific endpoints
                 .requestMatchers("/api/v1/manager/**").hasRole("MANAGER")

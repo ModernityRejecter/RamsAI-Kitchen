@@ -46,6 +46,10 @@ public class CartService {
         Product product = productRepository.findById(request.productId())
                 .orElseThrow(() -> new RuntimeException("Product not found"));
 
+        if (!product.isActive()) {
+            throw new RuntimeException("Cannot add an inactive product to the cart");
+        }
+
         if (cart.getItems() == null) {
             cart.setItems(new ArrayList<>());
         }

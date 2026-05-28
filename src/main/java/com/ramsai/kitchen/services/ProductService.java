@@ -119,10 +119,13 @@ public class ProductService {
         product.setDailyRecipe(Boolean.TRUE.equals(request.isDailyRecipe()));
         product.setDiscountPrice(request.discountPrice());
 
-        // Reset to pending and inactive
-        product.setApprovalStatus(Product.ApprovalStatus.PENDING);
-        product.setActive(false);
-        product.setRejectionFeedback(null);
+        User currentUser = (User) org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        if (currentUser.getRole() == com.ramsai.kitchen.models.entities.User.UserRole.CHEF) {
+            // Reset to pending and inactive
+            product.setApprovalStatus(Product.ApprovalStatus.PENDING);
+            product.setActive(false);
+            product.setRejectionFeedback(null);
+        }
 
         Product saved = productRepository.save(product);
         return productMapper.toResponse(saved);
