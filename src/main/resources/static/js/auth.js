@@ -7,7 +7,7 @@ function checkAuth() {
     const username = storage.getItem('username');
     const role = storage.getItem('role');
 
-    if (!token && !window.location.pathname.endsWith('login.html') && !window.location.pathname.endsWith('register.html') && !window.location.pathname.endsWith('index.html')) {
+    if (!token && !window.location.pathname.endsWith('login.html') && !window.location.pathname.endsWith('register.html') && !window.location.pathname.endsWith('index.html') && !window.location.pathname.endsWith('menu.html')) {
         window.location.href = 'login.html';
         return;
     }
@@ -126,7 +126,7 @@ function updateUIForAuthenticatedUser(username, role) {
             <li><a href="menu.html">Menu</a></li>
             <li><a href="profile.html">Profile</a></li>
             ${role === 'MANAGER' ? '<li><a href="audit.html">Audit Logs</a></li>' : ''}
-            ${role === 'MANAGER' ? '<li><a href="manager.html">Manager</a></li>' : ''}
+            ${role === 'CHEF' || role === 'MANAGER' ? `<li><a href="manager.html">${role === 'MANAGER' ? 'Manager' : 'Console'}</a></li>` : ''}
             ${role === 'CHEF' || role === 'MANAGER' ? '<li><a href="kitchen.html">Kitchen</a></li>' : ''}
             ${role === 'CUSTOMER' || role === 'WAITER' || role === 'MANAGER' ? '<li><a href="tables.html">Tables</a></li>' : ''}
             ${role === 'CUSTOMER' || role === 'WAITER' || role === 'MANAGER' ? '<li><a href="my-orders.html">My Orders</a></li>' : ''}

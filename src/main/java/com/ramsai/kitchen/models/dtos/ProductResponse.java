@@ -13,5 +13,7 @@ public record ProductResponse(
     Double averageRating,
     String categoryName,
     Long categoryId,
-    String approvalStatus
+    String approvalStatus,
+    boolean isActive,
+    String rejectionFeedback
 ) {}

@@ -37,6 +37,8 @@ public class ManagerProductController {
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Product not found"));
         product.setApprovalStatus(Product.ApprovalStatus.APPROVED);
+        product.setActive(true);
+        product.setRejectionFeedback(null);
         productRepository.save(product);
         return ResponseEntity.ok(Map.of(
                 "message", "Product approved successfully"
@@ -48,6 +50,7 @@ public class ManagerProductController {
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Product not found"));
         product.setApprovalStatus(Product.ApprovalStatus.REJECTED);
+        product.setActive(false);
         productRepository.save(product);
         return ResponseEntity.ok(Map.of(
                 "message", "Product rejected successfully"
@@ -58,6 +61,9 @@ public class ManagerProductController {
     public ResponseEntity<Map<String, Object>> activateProduct(@PathVariable Long id) {
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Product not found"));
+        if (product.getApprovalStatus() == Product.ApprovalStatus.REJECTED) {
+            throw new IllegalArgumentException("Cannot activate a rejected product. It must be approved first.");
+        }
         product.setActive(true);
         productRepository.save(product);
         return ResponseEntity.ok(Map.of(

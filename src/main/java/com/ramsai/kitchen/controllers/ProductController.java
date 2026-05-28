@@ -77,4 +77,40 @@ public class ProductController {
                 "message", "Success"
         ));
     }
+
+    @PatchMapping("/{id}/approve")
+    public ResponseEntity<Map<String, Object>> approveProduct(@PathVariable Long id) {
+        ProductResponse data = productService.approveProduct(id);
+        return ResponseEntity.ok(Map.of(
+                "data", data,
+                "message", "Product approved successfully"
+        ));
+    }
+
+    @PatchMapping("/{id}/reject")
+    public ResponseEntity<Map<String, Object>> rejectProduct(
+            @PathVariable Long id,
+            @RequestBody Map<String, String> request) {
+        String feedback = request.get("feedback");
+        ProductResponse data = productService.rejectProduct(id, feedback);
+        return ResponseEntity.ok(Map.of(
+                "data", data,
+                "message", "Product rejected successfully"
+        ));
+    }
+
+    @PatchMapping("/{id}/active")
+    public ResponseEntity<Map<String, Object>> updateActiveStatus(
+            @PathVariable Long id,
+            @RequestBody Map<String, Boolean> request) {
+        Boolean isActive = request.get("isActive");
+        if (isActive == null) {
+            return ResponseEntity.badRequest().body(Map.of("message", "isActive field is required"));
+        }
+        ProductResponse data = productService.updateProductActiveStatus(id, isActive);
+        return ResponseEntity.ok(Map.of(
+                "data", data,
+                "message", "Product status updated successfully"
+        ));
+    }
 }

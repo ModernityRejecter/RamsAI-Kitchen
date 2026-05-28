@@ -1,46 +1,114 @@
 let managerProducts = [];
 let managerIngredients = [];
+let currentUserRole = '';
+let currentFilter = 'ALL';
+let productToReject = null;
 
 document.addEventListener('DOMContentLoaded', async () => {
-    if (!enforceManagerRole()) return;
+    if (!enforceConsoleAccess()) return;
     await bootstrapManagerPage();
     registerHandlers();
 });
 
-function enforceManagerRole() {
+function enforceConsoleAccess() {
     const role = localStorage.getItem('role') || sessionStorage.getItem('role');
     const token = localStorage.getItem('token') || sessionStorage.getItem('token');
     if (!token) {
         window.location.href = 'login.html';
         return false;
     }
-    if (role !== 'MANAGER') {
-        alert('Only managers can access this page.');
+    if (role !== 'MANAGER' && role !== 'CHEF') {
+        alert('Only managers and chefs can access this page.');
         window.location.href = 'index.html';
         return false;
     }
+    currentUserRole = role;
     return true;
 }
 
 async function bootstrapManagerPage() {
-    await Promise.all([
+    const promises = [
         loadCategories(),
         loadProducts(),
-        loadIngredients(),
-        loadLowStock(),
-        loadInventoryLogs()
-    ]);
+        loadLowStock()
+    ];
+    if (currentUserRole === 'MANAGER') {
+        promises.push(loadIngredients());
+        promises.push(loadInventoryLogs());
+    }
+    await Promise.all(promises);
+    setupConsoleUI();
+}
+
+function setupConsoleUI() {
+    const titleNode = document.getElementById('consoleTitle');
+    const createHeader = document.getElementById('createProductHeader');
+    const createDesc = document.getElementById('createProductDesc');
+    const createBtn = document.getElementById('createProductBtn');
+    const productMgmtDesc = document.getElementById('productManagementDesc');
+
+    if (currentUserRole === 'CHEF') {
+        if (titleNode) titleNode.textContent = 'Chef Console';
+        if (createHeader) createHeader.textContent = 'Propose Product';
+        if (createDesc) createDesc.textContent = 'Propose new items for the menu (requires manager approval).';
+        if (createBtn) createBtn.textContent = 'Propose Product';
+        if (productMgmtDesc) productMgmtDesc.textContent = 'Track your proposed products and review rejection feedback.';
+        
+        // Hide Manager-only cards
+        const managerCards = [
+            'createIngredientCard',
+            'recipeManagementCard',
+            'stockAdjustmentCard',
+            'inventoryLogsCard'
+        ];
+        managerCards.forEach(id => {
+            const node = document.getElementById(id);
+            if (node) node.style.display = 'none';
+        });
+    } else {
+        if (titleNode) titleNode.textContent = 'Manager Console';
+        if (createHeader) createHeader.textContent = 'Create Product';
+        if (createDesc) createDesc.textContent = 'Define new menu items and pricing.';
+        if (createBtn) createBtn.textContent = 'Create Product';
+        if (productMgmtDesc) productMgmtDesc.textContent = 'Approve proposed items, toggle visibility on the menu, and review feedback.';
+    }
 }
 
 function registerHandlers() {
     document.getElementById('createProductForm').addEventListener('submit', onCreateProduct);
-    document.getElementById('createIngredientForm').addEventListener('submit', onCreateIngredient);
-    document.getElementById('addBomForm').addEventListener('submit', onAddBomRow);
-    document.getElementById('adjustStockForm').addEventListener('submit', onAdjustStock);
-    document.getElementById('bomProductId').addEventListener('change', () => {
-        const productId = Number(document.getElementById('bomProductId').value);
-        if (productId) loadBomRows(productId);
+    
+    if (currentUserRole === 'MANAGER') {
+        document.getElementById('createIngredientForm').addEventListener('submit', onCreateIngredient);
+        document.getElementById('addBomForm').addEventListener('submit', onAddBomRow);
+        document.getElementById('adjustStockForm').addEventListener('submit', onAdjustStock);
+        document.getElementById('bomProductId').addEventListener('change', () => {
+            const productId = Number(document.getElementById('bomProductId').value);
+            if (productId) loadBomRows(productId);
+        });
+    }
+
+    // Tab Filter Handlers
+    document.getElementById('tab-all').addEventListener('click', () => setProductFilter('ALL'));
+    document.getElementById('tab-pending').addEventListener('click', () => setProductFilter('PENDING'));
+    document.getElementById('tab-approved').addEventListener('click', () => setProductFilter('APPROVED'));
+    document.getElementById('tab-rejected').addEventListener('click', () => setProductFilter('REJECTED'));
+}
+
+function setProductFilter(filter) {
+    currentFilter = filter;
+    // Toggle active class on tabs
+    const tabs = ['all', 'pending', 'approved', 'rejected'];
+    tabs.forEach(t => {
+        const btn = document.getElementById(`tab-${t}`);
+        if (btn) {
+            if (t === filter.toLowerCase()) {
+                btn.classList.add('active');
+            } else {
+                btn.classList.remove('active');
+            }
+        }
     });
+    renderProductList();
 }
 
 async function onCreateProduct(e) {
@@ -149,14 +217,178 @@ async function loadProducts() {
     managerProducts = result.data || [];
 
     const bomProduct = document.getElementById('bomProductId');
-    bomProduct.innerHTML = managerProducts.map(product =>
-        `<option value="${product.id}">${escapeHtml(product.name)}</option>`
-    ).join('');
+    if (bomProduct && currentUserRole === 'MANAGER') {
+        bomProduct.innerHTML = managerProducts.map(product =>
+            `<option value="${product.id}">${escapeHtml(product.name)}</option>`
+        ).join('');
 
-    if (managerProducts.length > 0) {
-        await loadBomRows(managerProducts[0].id);
+        if (managerProducts.length > 0) {
+            await loadBomRows(managerProducts[0].id);
+        } else {
+            document.getElementById('bomRowsTable').innerHTML = '<tr><td colspan="4">No products found.</td></tr>';
+        }
+    }
+    renderProductList();
+}
+
+function renderProductList() {
+    const tableBody = document.getElementById('productManagementTableBody');
+    if (!tableBody) return;
+
+    // Filter products
+    let filtered = managerProducts;
+    if (currentUserRole === 'CHEF') {
+        if (currentFilter === 'ALL') {
+            filtered = managerProducts.filter(p => p.approvalStatus === 'PENDING' || p.approvalStatus === 'REJECTED');
+        } else {
+            filtered = managerProducts.filter(p => p.approvalStatus === currentFilter);
+        }
     } else {
-        document.getElementById('bomRowsTable').innerHTML = '<tr><td colspan="4">No products found.</td></tr>';
+        if (currentFilter !== 'ALL') {
+            filtered = managerProducts.filter(p => p.approvalStatus === currentFilter);
+        }
+    }
+
+    if (filtered.length === 0) {
+        tableBody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:var(--text-gray); padding: 20px 0;">No products found in this category.</td></tr>`;
+        return;
+    }
+
+    tableBody.innerHTML = filtered.map(product => {
+        const statusClass = product.approvalStatus.toLowerCase();
+        const visibilityText = product.isActive 
+            ? '<span style="color:#059669; font-weight:600;"><i class="fas fa-check-circle"></i> Yes</span>' 
+            : '<span style="color:#dc2626; font-weight:600;"><i class="fas fa-times-circle"></i> No</span>';
+        
+        let actions = '';
+        if (currentUserRole === 'MANAGER') {
+            if (product.approvalStatus === 'PENDING') {
+                actions += `
+                    <button type="button" class="action-btn-sm approve" onclick="approveProduct(${product.id})">
+                        <i class="fas fa-check"></i> Approve
+                    </button>
+                    <button type="button" class="action-btn-sm reject" onclick="openRejectModal(${product.id})">
+                        <i class="fas fa-times"></i> Reject
+                    </button>
+                `;
+            } else if (product.approvalStatus === 'REJECTED') {
+                actions += `
+                    <button type="button" class="action-btn-sm approve" onclick="approveProduct(${product.id})">
+                        <i class="fas fa-check"></i> Approve
+                    </button>
+                `;
+            } else {
+                actions += `
+                    <button type="button" class="action-btn-sm toggle-active" onclick="toggleActive(${product.id}, ${!product.isActive})">
+                        <i class="fas fa-power-off"></i> ${product.isActive ? 'Deactivate' : 'Activate'}
+                    </button>
+                `;
+            }
+        }
+
+        // If there is rejection feedback, show the "Feedback" button
+        if (product.approvalStatus === 'REJECTED' && product.rejectionFeedback) {
+            actions += `
+                <button type="button" class="action-btn-sm feedback-btn" onclick="toggleFeedback(${product.id})">
+                    <i class="fas fa-comment-dots"></i> Feedback
+                </button>
+            `;
+        }
+
+        if (!actions) {
+            actions = '<span style="color:var(--text-gray);">No actions available</span>';
+        }
+
+        const feedbackRow = (product.approvalStatus === 'REJECTED' && product.rejectionFeedback) ? `
+            <tr id="feedback-row-${product.id}" style="display:none; background-color:#fee2e2;">
+                <td colspan="6" style="padding:10px 15px; border-bottom:1px solid var(--border-color);">
+                    <div style="color:#b91c1c; font-size:0.85rem; display:flex; align-items:center; gap:8px;">
+                        <i class="fas fa-exclamation-circle"></i>
+                        <span><strong>Rejection Feedback:</strong> ${escapeHtml(product.rejectionFeedback)}</span>
+                    </div>
+                </td>
+            </tr>
+        ` : '';
+
+        return `
+            <tr>
+                <td><strong>${escapeHtml(product.name)}</strong></td>
+                <td>${escapeHtml(product.categoryName)}</td>
+                <td>$${product.basePrice.toFixed(2)}</td>
+                <td><span class="status-badge ${statusClass}">${product.approvalStatus}</span></td>
+                <td>${visibilityText}</td>
+                <td>
+                    <div style="display:flex; gap:6px; flex-wrap:wrap;">
+                        ${actions}
+                    </div>
+                </td>
+            </tr>
+            ${feedbackRow}
+        `;
+    }).join('');
+}
+
+function toggleFeedback(productId) {
+    const row = document.getElementById(`feedback-row-${productId}`);
+    if (row) {
+        row.style.display = row.style.display === 'none' ? 'table-row' : 'none';
+    }
+}
+
+async function approveProduct(id) {
+    if (!confirm('Are you sure you want to approve this product?')) return;
+    const result = await apiRequest(`/api/v1/products/${id}/approve`, { method: 'PATCH' });
+    if (result.ok) {
+        await loadProducts();
+    } else {
+        alert('Failed to approve product: ' + result.message);
+    }
+}
+
+function openRejectModal(id) {
+    productToReject = id;
+    const modal = document.getElementById('rejectionModal');
+    if (modal) modal.style.display = 'flex';
+}
+
+function closeRejectModal() {
+    productToReject = null;
+    const modal = document.getElementById('rejectionModal');
+    if (modal) modal.style.display = 'none';
+    const feedbackInput = document.getElementById('rejectionFeedback');
+    if (feedbackInput) feedbackInput.value = '';
+}
+
+async function submitRejection() {
+    const feedbackInput = document.getElementById('rejectionFeedback');
+    const feedback = feedbackInput ? feedbackInput.value.trim() : '';
+    if (!feedback) {
+        alert('Please provide feedback for rejection.');
+        return;
+    }
+    const result = await apiRequest(`/api/v1/products/${productToReject}/reject`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ feedback })
+    });
+    if (result.ok) {
+        closeRejectModal();
+        await loadProducts();
+    } else {
+        alert('Failed to reject product: ' + result.message);
+    }
+}
+
+async function toggleActive(id, isActive) {
+    const result = await apiRequest(`/api/v1/products/${id}/active`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ isActive })
+    });
+    if (result.ok) {
+        await loadProducts();
+    } else {
+        alert('Failed to update product status: ' + result.message);
     }
 }
 
@@ -169,13 +401,17 @@ async function loadIngredients() {
         `<option value="${ingredient.id}">${escapeHtml(ingredient.name)} (${escapeHtml(ingredient.unit)})</option>`
     ).join('');
 
-    document.getElementById('bomIngredientId').innerHTML = ingredientOptions;
-    document.getElementById('stockIngredientId').innerHTML = ingredientOptions;
+    const bomIngredient = document.getElementById('bomIngredientId');
+    if (bomIngredient) bomIngredient.innerHTML = ingredientOptions;
+
+    const stockIngredient = document.getElementById('stockIngredientId');
+    if (stockIngredient) stockIngredient.innerHTML = ingredientOptions;
 }
 
 async function loadBomRows(productId) {
     const result = await apiRequest(`/api/v1/inventory/products/${productId}/ingredients`);
     const tableBody = document.getElementById('bomRowsTable');
+    if (!tableBody) return;
     if (!result.ok) {
         tableBody.innerHTML = '<tr><td colspan="4">Failed to load recipe rows.</td></tr>';
         return;
@@ -209,6 +445,7 @@ async function removeBomRow(rowId, productId) {
 async function loadLowStock() {
     const result = await apiRequest('/api/v1/inventory/ingredients/low-stock');
     const tableBody = document.getElementById('lowStockTable');
+    if (!tableBody) return;
     if (!result.ok) {
         tableBody.innerHTML = '<tr><td colspan="4">Failed to load low-stock ingredients.</td></tr>';
         return;
@@ -231,6 +468,7 @@ async function loadLowStock() {
 async function loadInventoryLogs() {
     const result = await apiRequest('/api/v1/inventory/logs');
     const tableBody = document.getElementById('inventoryLogsTable');
+    if (!tableBody) return;
     if (!result.ok) {
         tableBody.innerHTML = '<tr><td colspan="4">Failed to load logs.</td></tr>';
         return;
@@ -275,7 +513,6 @@ function setStatus(elementId, ok, message) {
     node.style.color = ok ? '#065f46' : '#991b1b';
     node.style.border = `1px solid ${ok ? '#10b981' : '#f87171'}`;
     
-    // Auto-hide after 5 seconds
     setTimeout(() => {
         node.classList.remove('show');
     }, 5000);

@@ -51,7 +51,7 @@ class ProductControllerSecurityTest {
 
         ProductResponse response = new ProductResponse(
                 10L, "Margherita Pizza", "Classic pizza", BigDecimal.valueOf(35),
-                false, false, null, 0.0, "Pizza", 1L, "APPROVED"
+                false, false, null, 0.0, "Pizza", 1L, "APPROVED", true, "None"
         );
 
         when(productService.createProduct(any(ProductCreateRequest.class))).thenReturn(response);
@@ -66,7 +66,7 @@ class ProductControllerSecurityTest {
 
     @Test
     @WithMockUser(roles = "CHEF")
-    void createProduct_ChefForbidden() throws Exception {
+    void createProduct_ChefSuccess() throws Exception {
         ProductCreateRequest request = new ProductCreateRequest(
                 "Margherita Pizza",
                 "Classic pizza",
@@ -77,26 +77,26 @@ class ProductControllerSecurityTest {
                 null
         );
 
+        ProductResponse response = new ProductResponse(
+                10L, "Margherita Pizza", "Classic pizza", BigDecimal.valueOf(35),
+                false, false, null, 0.0, "Pizza", 1L, "APPROVED", true, "None"
+        );
+
+        when(productService.createProduct(any(ProductCreateRequest.class))).thenReturn(response);
+
         mockMvc.perform(post("/api/v1/products")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isForbidden());
+                .andExpect(status().isOk());
     }
 
     @Test
-    @WithMockUser(roles = "MANAGER")
-    void getAllProductsForManagement_ManagerSuccess() throws Exception {
+    @WithMockUser(roles = "CHEF")
+    void getAllProductsForManagement_ChefSuccess() throws Exception {
         when(productService.getAllProductsForManagement()).thenReturn(List.of());
 
         mockMvc.perform(get("/api/v1/products/manage"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.message").value("Success"));
-    }
-
-    @Test
-    @WithMockUser(roles = "CHEF")
-    void getAllProductsForManagement_ChefForbidden() throws Exception {
-        mockMvc.perform(get("/api/v1/products/manage"))
-                .andExpect(status().isForbidden());
     }
 }
