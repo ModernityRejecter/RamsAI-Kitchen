@@ -94,6 +94,6 @@ public class User implements UserDetails {
     }
 
     public enum UserRole {
-        CUSTOMER, WAITER, CHEF, MANAGER
+        CUSTOMER, GUEST, WAITER, CHEF, MANAGER
     }
 }

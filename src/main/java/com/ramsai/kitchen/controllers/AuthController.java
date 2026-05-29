@@ -31,16 +31,27 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<Map<String, Object>> login(@Valid @RequestBody AuthenticationRequest request) {
-        AuthenticationResponse response = authService.authenticate(request);
+    public ResponseEntity<Map<String, Object>> authenticate(
+            @RequestBody AuthenticationRequest request) {
+        AuthenticationResponse data = authService.authenticate(request);
         return ResponseEntity.ok(Map.of(
-                "data", response,
+                "data", data,
                 "message", "Login successful"
         ));
     }
 
+    @PostMapping("/guest")
+    public ResponseEntity<Map<String, Object>> guestLogin() {
+        AuthenticationResponse data = authService.guestLogin();
+        return ResponseEntity.ok(Map.of(
+                "data", data,
+                "message", "Guest login successful"
+        ));
+    }
+
     @PostMapping("/refresh")
-    public ResponseEntity<Map<String, Object>> refresh(@RequestBody Map<String, String> request) {
+    public ResponseEntity<Map<String, Object>> refresh(
+            @RequestBody Map<String, String> request) {
         String refreshToken = request.get("refreshToken");
         AuthenticationResponse response = authService.refreshToken(refreshToken);
         return ResponseEntity.ok(Map.of(

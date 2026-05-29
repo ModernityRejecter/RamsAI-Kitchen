@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -26,6 +27,32 @@ public class AuthService {
     private final RefreshTokenService refreshTokenService;
     private final AuditLogService auditLogService;
     private final AuthenticationManager authenticationManager;
+
+    @Transactional
+    public AuthenticationResponse guestLogin() {
+        String guestId = UUID.randomUUID().toString().substring(0, 8);
+        String username = "GUEST_" + guestId;
+        String email = "guest_" + guestId + "@temp.com";
+        String password = UUID.randomUUID().toString();
+
+        User user = User.builder()
+                .username(username)
+                .passwordHash(passwordEncoder.encode(password))
+                .email(email)
+                .role(User.UserRole.GUEST)
+                .isActive(true)
+                .isEmailVerified(false)
+                .createdAt(LocalDateTime.now())
+                .build();
+
+        User savedUser = userRepository.save(user);
+        String jwtToken = jwtService.generateToken(savedUser);
+        RefreshToken refreshToken = refreshTokenService.createRefreshToken(savedUser.getId());
+
+        auditLogService.logAction(savedUser, "GUEST_LOGIN", "SUCCESS", "Guest account created successfully");
+
+        return new AuthenticationResponse(jwtToken, refreshToken.getToken(), savedUser.getUsername(), savedUser.getRole().name());
+    }
 
     @Transactional
     public AuthenticationResponse register(RegisterRequest request) {
