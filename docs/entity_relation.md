@@ -2,10 +2,6 @@
 
 This diagram shows all key entities in the system and their relationships.
 
-> 💡 **Tip:** GitHub can render Mermaid diagrams natively.
-> To view this visually, open this file directly on GitHub — no external tools are needed.
-
-
 ```mermaid
 ---
 config:
