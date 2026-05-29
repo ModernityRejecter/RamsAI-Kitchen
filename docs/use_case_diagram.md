@@ -1,6 +1,8 @@
 ```mermaid
-config: layout: elk
-
+---
+config: 
+    layout: elk
+---
 flowchart TB subgraph Guest[Guest (No Account)] G1["View Menu"] G2["Place Custom Order"] G3["Occupy Table"] end
 
 subgraph Customer[Customer (With Account)]
