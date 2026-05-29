@@ -1,5 +1,8 @@
 const ORDER_STATUS_FLOW = ['RECEIVED', 'COOKING', 'READY', 'SERVED'];
 const ITEM_STATUS_FLOW = ['PENDING', 'COOKING', 'READY', 'SERVED'];
+
+let soundEnabled = true;
+let audioCtx = null;
 // Polling is now a safety net behind realtime push, so it can run less often.
 const REFRESH_INTERVAL_MS = 30000;
 
@@ -25,9 +28,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     const refreshBtn = document.getElementById('refreshOrdersBtn');
-    if (refreshBtn) {
-        refreshBtn.addEventListener('click', () => loadAll(true));
-    }
+    if (refreshBtn) refreshBtn.addEventListener('click', () => loadAll(true));
+
+    const soundBtn = document.getElementById('soundToggle');
+    if (soundBtn) soundBtn.addEventListener('click', toggleSound);
+
+    document.addEventListener('click', ensureAudio);
 
     await loadAll(true);
     connectLiveTracking();
@@ -180,7 +186,7 @@ function renderCurrentOrderCard(order) {
     const orderStatus = order.status || 'RECEIVED';
     const items = Array.isArray(order.items) ? order.items : [];
     const total = formatMoney(order.totalPrice);
-    const placed = formatDateTime(order.createdAt);
+    const placed = formatDateTime(order.placedAt || order.createdAt);
 
     return `
         <article class="order-card order-card-current">
@@ -286,7 +292,7 @@ function renderHistoryRow(order) {
     const items = Array.isArray(order.items) ? order.items : [];
     const status = order.status || 'RECEIVED';
     const tableLabel = order.tableNumber != null ? `Table ${order.tableNumber}` : 'No table';
-    const placed = formatDateTime(order.createdAt);
+    const placed = formatDateTime(order.placedAt || order.createdAt);
 
     return `
         <article class="history-row ${expanded ? 'expanded' : ''}" data-order-id="${id}">
@@ -312,6 +318,46 @@ function renderHistoryRow(order) {
             </div>
         </article>
     `;
+}
+
+// ---- Sound notifications ----
+
+function toggleSound() {
+    soundEnabled = !soundEnabled;
+    const btn = document.getElementById('soundToggle');
+    if (!btn) return;
+    btn.title = soundEnabled ? 'Mute notifications' : 'Unmute notifications';
+    btn.innerHTML = soundEnabled ? '<i class="fas fa-volume-high"></i>' : '<i class="fas fa-volume-xmark"></i>';
+    btn.classList.toggle('muted', !soundEnabled);
+    if (soundEnabled) ensureAudio();
+}
+
+function ensureAudio() {
+    if (!audioCtx) {
+        try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { return; }
+    }
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+}
+
+function playBeep() {
+    if (!soundEnabled) return;
+    ensureAudio();
+    if (!audioCtx) return;
+    try {
+        [[1047, 0], [880, 0.22]].forEach(([freq, delay]) => {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.type = 'sine';
+            osc.frequency.value = freq;
+            const t = audioCtx.currentTime + delay;
+            gain.gain.setValueAtTime(0.18, t);
+            gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.4);
+            osc.start(t);
+            osc.stop(t + 0.4);
+        });
+    } catch (e) { /* ignore */ }
 }
 
 // ---- Realtime live tracking (STOMP over SockJS, falls back to polling) ----
@@ -361,6 +407,10 @@ function onOrderEvent(order) {
     lastKnownStatus.set(order.id, order.status);
     if (order.status === 'READY' && prev !== 'READY') {
         showToast(`Order #${order.id} is ready to serve!`, 'toast-ready');
+    }
+    if (order.status === 'SERVED' && prev !== 'SERVED') {
+        showToast(`Order #${order.id} has been served — enjoy your meal!`, 'toast-served');
+        playBeep();
     }
     scheduleLiveRefresh();
 }

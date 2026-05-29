@@ -151,25 +151,27 @@
             border-radius: 12px;
             box-shadow: var(--shadow);
             position: sticky;
-            top: 100px;
+            top: 110px;
             width: 320px;
             flex-shrink: 0;
             display: flex;
             flex-direction: column;
-            gap: 18px;
-            max-height: calc(100vh - 120px);
-            overflow-y: auto;
+            gap: 14px;
+            align-self: flex-start;
         }
 
         .panel-section {
-            border-bottom: 1px solid #eee;
+            border-bottom: 1px solid #f0f0f0;
             padding-bottom: 14px;
         }
         .panel-section:last-child { border-bottom: none; padding-bottom: 0; }
         .panel-section h3 {
-            margin-bottom: 12px;
+            margin: 0 0 10px;
             color: var(--secondary-color);
-            font-size: 1.05rem;
+            font-size: 0.72rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.7px;
         }
 
         .grid-size-controls {
@@ -194,49 +196,50 @@
 
         .legend {
             display: flex;
-            gap: 10px;
+            gap: 6px;
             flex-wrap: wrap;
-            font-size: 0.8rem;
+            font-size: 0.78rem;
         }
         .legend-item {
             display: flex;
             align-items: center;
-            gap: 6px;
+            gap: 5px;
+            padding: 3px 8px;
+            background: #f5f5f5;
+            border-radius: 999px;
         }
         .legend-swatch {
-            width: 14px;
-            height: 14px;
+            width: 11px;
+            height: 11px;
             border-radius: 3px;
+            flex-shrink: 0;
         }
 
         .table-list {
-            max-height: 240px;
-            overflow-y: auto;
             display: flex;
             flex-direction: column;
-            gap: 8px;
+            gap: 6px;
         }
 
         .table-list-item {
-            padding: 10px;
+            padding: 8px 12px;
             background: #f9f9f9;
-            border-radius: 6px;
+            border-radius: 8px;
             cursor: pointer;
             display: flex;
             justify-content: space-between;
             align-items: center;
             border: 2px solid transparent;
-            transition: all 0.2s;
+            transition: background 0.15s, border-color 0.15s;
+            font-size: 0.88rem;
         }
 
-        .table-list-item:hover {
-            background: #eee;
-        }
+        .table-list-item:hover { background: #f0f0f0; }
 
         .table-list-item.active {
             border-color: var(--primary-color);
             background: #fff;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            box-shadow: 0 1px 4px rgba(0,0,0,0.06);
         }
 
         .table-list-item .status-badge {
@@ -251,44 +254,53 @@
         .status-badge.SELF { background: #3498db; }
 
         .detail-row {
-            margin-bottom: 15px;
+            margin-bottom: 8px;
             display: flex;
             justify-content: space-between;
+            align-items: center;
+            font-size: 0.88rem;
         }
 
         .detail-label { font-weight: 600; color: var(--text-muted); }
         .detail-value { font-weight: 700; color: var(--secondary-color); }
 
         .action-btns {
-            margin-top: 20px;
+            margin-top: 12px;
             display: flex;
             flex-direction: column;
-            gap: 10px;
+            gap: 8px;
         }
 
         .btn {
-            padding: 10px 20px;
-            border-radius: 5px;
+            padding: 9px 16px;
+            border-radius: 8px;
             border: none;
             cursor: pointer;
             font-weight: 600;
-            transition: all 0.3s;
+            transition: filter 0.15s;
             text-align: center;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 7px;
+            font-size: 0.88rem;
             width: 100%;
         }
+        .btn:hover { filter: brightness(0.94); }
 
         .btn-primary { background-color: var(--primary-color); color: white; }
-        .btn-primary:hover { background-color: var(--accent-color); }
         .btn-danger { background-color: #e74c3c; color: white; }
-        .btn-danger:hover { background-color: #c0392b; }
         .btn-outline { background: transparent; border: 2px solid var(--primary-color); color: var(--primary-color); }
-        .btn-outline:hover { background: var(--primary-color); color: white; }
+        .btn-outline:hover { background: var(--primary-color); color: white; filter: none; }
 
         .controls {
-            margin-bottom: 20px;
+            margin-bottom: 12px;
             display: flex;
-            gap: 15px;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
         }
+        .controls .btn { width: auto; }
 
         .status-toast {
             position: fixed;
@@ -330,6 +342,12 @@
             gap: 8px;
         }
         #ctx-delete:hover { background: #fef0f0; }
+
+        @media (max-width: 900px) {
+            .management-container { flex-direction: column; align-items: center; }
+            .floor-plan-wrapper { max-width: 100%; }
+            .selection-panel { position: static; width: 100%; max-width: none; }
+        }
     </style>
 </head>
 <body>
@@ -355,10 +373,10 @@
             </div>
 
             <div class="controls">
-                <button id="save-layout" class="btn btn-primary" style="display:none;">Save Layout</button>
-                <button id="add-table" class="btn btn-primary">Add Table</button>
-                <button id="add-wall" class="btn btn-primary">Add Wall</button>
-                <button id="reset-grid" class="btn btn-primary" style="background-color: #e74c3c;">Reset Grid</button>
+                <button id="save-layout" class="btn btn-primary" style="display:none;"><i class="fas fa-floppy-disk"></i> Save Layout</button>
+                <button id="add-table" class="btn btn-primary"><i class="fas fa-plus"></i> Add Table</button>
+                <button id="add-wall" class="btn btn-primary"><i class="fas fa-grip-lines"></i> Add Wall</button>
+                <button id="reset-grid" class="btn btn-danger"><i class="fas fa-rotate-left"></i> Reset Grid</button>
             </div>
 
             <div id="floor-plan" class="floor-plan">

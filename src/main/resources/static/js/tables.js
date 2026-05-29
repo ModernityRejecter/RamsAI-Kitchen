@@ -30,6 +30,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (!isManagerOrWaiter) {
         document.querySelector('.controls').style.display = 'none';
+        const sectionTitle = document.querySelector('.floor-plan-wrapper .section-title');
+        if (sectionTitle) sectionTitle.style.display = 'none';
     }
 
     if (isManager) {
@@ -106,19 +108,17 @@ document.addEventListener('DOMContentLoaded', () => {
                 authenticatedFetch('/api/v1/walls')
             ]);
 
-            if (tablesRes.ok && wallsRes.ok) {
-                const tablesResult = await tablesRes.json();
-                const wallsResult = await wallsRes.json();
+            const tables = tablesRes.ok ? (await tablesRes.json()).data : [];
+            const walls = wallsRes.ok ? (await wallsRes.json()).data : [];
 
-                elements = [
-                    ...tablesResult.data.map(t => ({...t, elementType: 'table'})),
-                    ...wallsResult.data.map(w => ({...w, elementType: 'wall'}))
-                ];
-                processGroups();
-                computeWallEdges();
-                renderElements();
-                populateSidePanelList();
-            }
+            elements = [
+                ...tables.map(t => ({...t, elementType: 'table'})),
+                ...walls.map(w => ({...w, elementType: 'wall'}))
+            ];
+            processGroups();
+            computeWallEdges();
+            renderElements();
+            populateSidePanelList();
         } catch (error) {
             showToast('Error connecting to server', 'error');
         }

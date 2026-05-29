@@ -21,6 +21,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -117,6 +118,7 @@ public class CartService {
 
         cart.setTable(table);
         cart.setStatus(OrderStatus.RECEIVED);
+        cart.setPlacedAt(LocalDateTime.now());
         orderRepository.save(cart);
         log.info("Order {} checked out for table {}", cart.getId(), tableId);
         return orderMapper.toResponse(cart);

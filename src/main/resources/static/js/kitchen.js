@@ -8,8 +8,6 @@ const orders = new Map();      // orderId -> OrderResponse
 const knownIds = new Set();    // ids we've already seen (so we only alert on truly new orders)
 let flashIds = new Set();      // ids to flash on next render
 let connected = false;
-let soundEnabled = true;
-let audioCtx = null;
 
 document.addEventListener('DOMContentLoaded', () => {
     const token = localStorage.getItem('token') || sessionStorage.getItem('token');
@@ -22,6 +20,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     loadBoard();
     connectRealtime();
+
+    window.addEventListener('kitchenOrderArrived', (e) => {
+        handleOrderEvent(e.detail);
+    });
 
     setInterval(updateElapsedLabels, 30000);
     setInterval(() => { if (!connected) loadBoard(); }, FALLBACK_POLL_MS);
@@ -73,7 +75,6 @@ function handleOrderEvent(order) {
 
     if (isNew && order.status === 'RECEIVED') {
         showToast(`New order #${order.id}${order.tableNumber != null ? ' · Table ' + order.tableNumber : ''}`);
-        playBeep();
     }
 }
 
@@ -82,7 +83,7 @@ function renderAll() {
     [...orders.values()].forEach(o => { if (byColumn[o.status]) byColumn[o.status].push(o); });
 
     KDS_COLUMNS.forEach(status => {
-        const list = byColumn[status].sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+        const list = byColumn[status].sort((a, b) => new Date(a.placedAt || a.createdAt) - new Date(b.placedAt || b.createdAt));
         document.getElementById(`count-${status}`).textContent = list.length;
         const col = document.getElementById(`col-${status}`);
         col.innerHTML = list.length
@@ -104,7 +105,7 @@ function renderCard(order) {
         <article class="kds-card" data-order-id="${order.id}">
             <div class="kds-card-head">
                 <div><span class="kds-order-id">#${order.id}</span>${table}</div>
-                <span class="kds-elapsed" data-created="${order.createdAt}">${formatElapsed(order.createdAt)}</span>
+                <span class="kds-elapsed" data-created="${order.placedAt || order.createdAt}">${formatElapsed(order.placedAt || order.createdAt)}</span>
             </div>
             <ul class="kds-items">
                 ${items.map(renderItem).join('') || '<li class="kds-item">No items.</li>'}
@@ -135,9 +136,9 @@ function renderItem(item) {
 }
 
 function renderItemBtn(item, status) {
-    if (status === 'PENDING') return `<button class="kds-item-btn" onclick="advanceItem(${item.id}, 'COOKING')">Start</button>`;
-    if (status === 'COOKING') return `<button class="kds-item-btn" onclick="advanceItem(${item.id}, 'READY')">Ready</button>`;
-    if (status === 'READY') return `<button class="kds-item-btn" onclick="advanceItem(${item.id}, 'SERVED')">Serve</button>`;
+    if (status === 'PENDING') return `<button class="kds-item-btn btn-start" onclick="advanceItem(${item.id}, 'COOKING')"><i class="fas fa-play"></i> Start</button>`;
+    if (status === 'COOKING') return `<button class="kds-item-btn btn-ready" onclick="advanceItem(${item.id}, 'READY')"><i class="fas fa-check"></i> Ready</button>`;
+    if (status === 'READY') return `<button class="kds-item-btn btn-serve" onclick="advanceItem(${item.id}, 'SERVED')"><i class="fas fa-bell-concierge"></i> Serve</button>`;
     return '';
 }
 
@@ -203,38 +204,12 @@ function setConn(isUp) {
 }
 
 function toggleSound() {
-    soundEnabled = !soundEnabled;
+    toggleGlobalSound();
     const btn = document.getElementById('soundToggle');
     btn.classList.toggle('active', soundEnabled);
     btn.innerHTML = soundEnabled
         ? '<i class="fas fa-volume-high"></i> Sound'
         : '<i class="fas fa-volume-xmark"></i> Muted';
-    if (soundEnabled) ensureAudio();
-}
-
-function ensureAudio() {
-    if (!audioCtx) {
-        try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { return; }
-    }
-    if (audioCtx.state === 'suspended') audioCtx.resume();
-}
-
-function playBeep() {
-    if (!soundEnabled) return;
-    ensureAudio();
-    if (!audioCtx) return;
-    try {
-        const osc = audioCtx.createOscillator();
-        const gain = audioCtx.createGain();
-        osc.connect(gain);
-        gain.connect(audioCtx.destination);
-        osc.type = 'sine';
-        osc.frequency.value = 880;
-        gain.gain.setValueAtTime(0.18, audioCtx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.45);
-        osc.start();
-        osc.stop(audioCtx.currentTime + 0.45);
-    } catch (e) { /* ignore */ }
 }
 
 function minutesSince(iso) {

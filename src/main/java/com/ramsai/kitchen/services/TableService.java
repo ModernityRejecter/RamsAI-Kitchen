@@ -278,8 +278,9 @@ public class TableService {
     }
 
     private TableResponse mapToTableResponse(RestaurantTable table) {
-        List<Order> orders = orderRepository.findAllByTableIdOrderByCreatedAtDesc(table.getId());
-        LocalDateTime lastOrderTime = orders.isEmpty() ? null : orders.get(0).getCreatedAt();
+        List<Order> orders = orderRepository.findAllByTableIdOrderByPlacedAtDesc(table.getId());
+        LocalDateTime lastOrderTime = orders.isEmpty() ? null
+                : (orders.get(0).getPlacedAt() != null ? orders.get(0).getPlacedAt() : orders.get(0).getCreatedAt());
 
         return new TableResponse(
                 table.getId(),

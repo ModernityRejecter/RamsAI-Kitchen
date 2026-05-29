@@ -46,9 +46,14 @@
                         <span id="currentTableLabel" class="current-table-label"></span>
                         <span id="liveIndicator" class="live-indicator"><span class="dot"></span> Live</span>
                     </h3>
-                    <button id="refreshOrdersBtn" class="refresh-btn" type="button" title="Refresh">
-                        <i class="fas fa-rotate-right"></i> Refresh
-                    </button>
+                    <div style="display:flex;gap:8px;align-items:center;">
+                        <button id="soundToggle" class="refresh-btn" type="button" title="Mute notifications">
+                            <i class="fas fa-volume-high"></i>
+                        </button>
+                        <button id="refreshOrdersBtn" class="refresh-btn" type="button" title="Refresh">
+                            <i class="fas fa-rotate-right"></i> Refresh
+                        </button>
+                    </div>
                 </div>
 
                 <div id="currentOrdersList" class="current-orders-list">

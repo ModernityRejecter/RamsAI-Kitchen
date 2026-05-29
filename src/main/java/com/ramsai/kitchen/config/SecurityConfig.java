@@ -40,8 +40,9 @@ public class SecurityConfig {
                     "/error"
                 ).permitAll()
 
-                // Tables public (authenticated) endpoints
+                // Tables/walls public (authenticated) read endpoints — customers view the floor plan
                 .requestMatchers(HttpMethod.GET, "/api/v1/tables/map").authenticated()
+                .requestMatchers(HttpMethod.GET, "/api/v1/walls").authenticated()
                 .requestMatchers(HttpMethod.PUT, "/api/v1/tables/*/free").authenticated()
                 .requestMatchers(HttpMethod.PUT, "/api/v1/tables/*/occupy").authenticated()
 
