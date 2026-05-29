@@ -121,7 +121,9 @@
             border-radius: 12px;
             padding: 14px;
             animation: kdsIn 0.25s ease-out;
+            transition: border-color 0.15s, box-shadow 0.15s;
         }
+        .kds-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.35); }
         .kds-col-cooking .kds-card { border-left-color: #fbbf24; }
         .kds-col-ready .kds-card { border-left-color: #4ade80; }
         .kds-card.flash { animation: kdsFlash 1.2s ease-out; }
@@ -179,17 +181,25 @@
         .kds-note i { margin-top: 2px; }
         .kds-item-side { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
         .kds-item-btn {
-            background: #334155;
-            color: #e2e8f0;
             border: none;
-            border-radius: 6px;
-            padding: 4px 9px;
-            font-size: 0.72rem;
+            border-radius: 8px;
+            padding: 7px 13px;
+            min-height: 36px;
+            font-size: 0.8rem;
             font-weight: 700;
             cursor: pointer;
             white-space: nowrap;
+            color: #0f172a;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            transition: filter 0.15s, transform 0.1s;
         }
-        .kds-item-btn:hover { background: #475569; }
+        .kds-item-btn:hover { filter: brightness(1.1); }
+        .kds-item-btn:active { transform: scale(0.95); }
+        .kds-item-btn.btn-start { background: #60a5fa; }
+        .kds-item-btn.btn-ready { background: #4ade80; }
+        .kds-item-btn.btn-serve { background: #fbbf24; }
 
         .kds-actions { display: flex; gap: 8px; margin-top: 12px; }
         .kds-action {

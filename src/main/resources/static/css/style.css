@@ -1257,6 +1257,10 @@ nav ul li a.active {
 .toast i { color: var(--primary-color, #f39c12); }
 .toast.toast-ready { background: #1e7f3a; }
 .toast.toast-ready i { color: #d2f5dd; }
+.toast.toast-served { background: #b45309; }
+.toast.toast-served i { color: #fef3c7; }
+
+.refresh-btn.muted { color: #aaa; border-color: #e5e5e5; }
 
 /* Live-tracking indicator on the My Orders page */
 .live-indicator {

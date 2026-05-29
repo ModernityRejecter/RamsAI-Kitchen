@@ -1,6 +1,11 @@
 // auth.js
 const getStorage = () => localStorage.getItem('token') ? localStorage : sessionStorage;
 
+let soundEnabled = true;
+let audioCtx = null;
+let kitchenClient = null;
+let orderClient = null;
+
 function checkAuth() {
     const storage = getStorage();
     const token = storage.getItem('token');
@@ -14,6 +19,13 @@ function checkAuth() {
 
     if (token) {
         updateUIForAuthenticatedUser(username, role);
+        const userRole = localStorage.getItem('role') || sessionStorage.getItem('role');
+        if (userRole === 'CHEF' || userRole === 'MANAGER') {
+            initKitchenNotifications();
+        }
+        if (userRole === 'CUSTOMER' || userRole === 'WAITER' || userRole === 'MANAGER') {
+            initOrderNotifications();
+        }
     }
 
     setupLiveValidation();
@@ -165,4 +177,105 @@ async function updateCartCount() {
     }
 }
 
-document.addEventListener('DOMContentLoaded', checkAuth);
+function ensureAudio() {
+    if (!audioCtx) {
+        try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { return; }
+    }
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+}
+
+function playKitchenAlert() {
+    if (!soundEnabled) return;
+    ensureAudio();
+    if (!audioCtx) return;
+    try {
+        [[880, 0], [1100, 0.22]].forEach(([freq, delay]) => {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.type = 'sine';
+            osc.frequency.value = freq;
+            const t = audioCtx.currentTime + delay;
+            gain.gain.setValueAtTime(0.22, t);
+            gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.35);
+            osc.start(t);
+            osc.stop(t + 0.35);
+        });
+    } catch (e) { /* ignore */ }
+}
+
+function playOrderAlert() {
+    if (!soundEnabled) return;
+    ensureAudio();
+    if (!audioCtx) return;
+    try {
+        [[1047, 0], [880, 0.22]].forEach(([freq, delay]) => {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.type = 'sine';
+            osc.frequency.value = freq;
+            const t = audioCtx.currentTime + delay;
+            gain.gain.setValueAtTime(0.18, t);
+            gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.4);
+            osc.start(t);
+            osc.stop(t + 0.4);
+        });
+    } catch (e) { /* ignore */ }
+}
+
+function toggleGlobalSound() {
+    soundEnabled = !soundEnabled;
+    localStorage.setItem('soundEnabled', soundEnabled);
+}
+
+function initKitchenNotifications() {
+    if (kitchenClient) return;
+    kitchenClient = createRealtimeClient({
+        onConnect: (client) => {
+            client.subscribe('/topic/kitchen', (msg) => {
+                try {
+                    const order = JSON.parse(msg.body);
+                    if (order && order.id != null && order.status === 'RECEIVED') {
+                        playKitchenAlert();
+                        window.dispatchEvent(new CustomEvent('kitchenOrderArrived', { detail: order }));
+                    }
+                } catch (e) { /* ignore */ }
+            });
+        },
+        onDisconnect: () => { kitchenClient = null; },
+        onError: () => { kitchenClient = null; }
+    });
+}
+
+function initOrderNotifications() {
+    if (orderClient) return;
+    const knownOrderStatuses = new Map();
+    orderClient = createRealtimeClient({
+        onConnect: (client) => {
+            client.subscribe('/topic/my-orders', (msg) => {
+                try {
+                    const order = JSON.parse(msg.body);
+                    if (order && order.id != null) {
+                        const prev = knownOrderStatuses.get(order.id);
+                        knownOrderStatuses.set(order.id, order.status);
+                        if (order.status === 'SERVED' && prev !== 'SERVED') {
+                            playOrderAlert();
+                            window.dispatchEvent(new CustomEvent('orderServed', { detail: order }));
+                        }
+                    }
+                } catch (e) { /* ignore */ }
+            });
+        },
+        onDisconnect: () => { orderClient = null; },
+        onError: () => { orderClient = null; }
+    });
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    checkAuth();
+    soundEnabled = localStorage.getItem('soundEnabled') !== 'false';
+    document.addEventListener('click', ensureAudio);
+});

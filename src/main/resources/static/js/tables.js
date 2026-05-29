@@ -30,6 +30,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (!isManagerOrWaiter) {
         document.querySelector('.controls').style.display = 'none';
+        const sectionTitle = document.querySelector('.floor-plan-wrapper .section-title');
+        if (sectionTitle) sectionTitle.style.display = 'none';
     }
 
     if (isManager) {

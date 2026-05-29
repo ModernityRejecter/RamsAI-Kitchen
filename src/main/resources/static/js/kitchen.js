@@ -8,8 +8,6 @@ const orders = new Map();      // orderId -> OrderResponse
 const knownIds = new Set();    // ids we've already seen (so we only alert on truly new orders)
 let flashIds = new Set();      // ids to flash on next render
 let connected = false;
-let soundEnabled = true;
-let audioCtx = null;
 
 document.addEventListener('DOMContentLoaded', () => {
     const token = localStorage.getItem('token') || sessionStorage.getItem('token');
@@ -22,6 +20,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     loadBoard();
     connectRealtime();
+
+    window.addEventListener('kitchenOrderArrived', (e) => {
+        handleOrderEvent(e.detail);
+    });
 
     setInterval(updateElapsedLabels, 30000);
     setInterval(() => { if (!connected) loadBoard(); }, FALLBACK_POLL_MS);
@@ -73,7 +75,6 @@ function handleOrderEvent(order) {
 
     if (isNew && order.status === 'RECEIVED') {
         showToast(`New order #${order.id}${order.tableNumber != null ? ' · Table ' + order.tableNumber : ''}`);
-        playBeep();
     }
 }
 
@@ -135,9 +136,9 @@ function renderItem(item) {
 }
 
 function renderItemBtn(item, status) {
-    if (status === 'PENDING') return `<button class="kds-item-btn" onclick="advanceItem(${item.id}, 'COOKING')">Start</button>`;
-    if (status === 'COOKING') return `<button class="kds-item-btn" onclick="advanceItem(${item.id}, 'READY')">Ready</button>`;
-    if (status === 'READY') return `<button class="kds-item-btn" onclick="advanceItem(${item.id}, 'SERVED')">Serve</button>`;
+    if (status === 'PENDING') return `<button class="kds-item-btn btn-start" onclick="advanceItem(${item.id}, 'COOKING')"><i class="fas fa-play"></i> Start</button>`;
+    if (status === 'COOKING') return `<button class="kds-item-btn btn-ready" onclick="advanceItem(${item.id}, 'READY')"><i class="fas fa-check"></i> Ready</button>`;
+    if (status === 'READY') return `<button class="kds-item-btn btn-serve" onclick="advanceItem(${item.id}, 'SERVED')"><i class="fas fa-bell-concierge"></i> Serve</button>`;
     return '';
 }
 
@@ -203,38 +204,12 @@ function setConn(isUp) {
 }
 
 function toggleSound() {
-    soundEnabled = !soundEnabled;
+    toggleGlobalSound();
     const btn = document.getElementById('soundToggle');
     btn.classList.toggle('active', soundEnabled);
     btn.innerHTML = soundEnabled
         ? '<i class="fas fa-volume-high"></i> Sound'
         : '<i class="fas fa-volume-xmark"></i> Muted';
-    if (soundEnabled) ensureAudio();
-}
-
-function ensureAudio() {
-    if (!audioCtx) {
-        try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { return; }
-    }
-    if (audioCtx.state === 'suspended') audioCtx.resume();
-}
-
-function playBeep() {
-    if (!soundEnabled) return;
-    ensureAudio();
-    if (!audioCtx) return;
-    try {
-        const osc = audioCtx.createOscillator();
-        const gain = audioCtx.createGain();
-        osc.connect(gain);
-        gain.connect(audioCtx.destination);
-        osc.type = 'sine';
-        osc.frequency.value = 880;
-        gain.gain.setValueAtTime(0.18, audioCtx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.45);
-        osc.start();
-        osc.stop(audioCtx.currentTime + 0.45);
-    } catch (e) { /* ignore */ }
 }
 
 function minutesSince(iso) {
