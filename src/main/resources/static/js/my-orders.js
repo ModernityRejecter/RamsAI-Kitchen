@@ -203,11 +203,11 @@ function renderItemRow(item, orderStatus) {
         if (review) {
             reviewHtml = `<div class="item-review-status">
                 <span class="rating-stars">★ ${review.rating}</span>
-                <button class="text-btn" onclick="openReviewModal(${item.productId}, '${escapeHtml(item.productName)}', ${review.id}, ${review.rating}, '${escapeHtml(review.comment || '')}')">Edit Review</button>
+                <button class="text-btn" onclick="openReviewModal(${item.productId}, '${escapeJS(item.productName)}', ${review.id}, ${review.rating}, '${escapeJS(review.comment || '')}')">Edit Review</button>
             </div>`;
         } else {
             reviewHtml = `<div class="item-review-status">
-                <button class="cta-button btn-small" onclick="openReviewModal(${item.productId}, '${escapeHtml(item.productName)}')">Leave a Review</button>
+                <button class="cta-button btn-small" onclick="openReviewModal(${item.productId}, '${escapeJS(item.productName)}')">Leave a Review</button>
             </div>`;
         }
     }
@@ -455,6 +455,16 @@ function escapeHtml(s) {
         .replace(/>/g, '&gt;')
         .replace(/"/g, '&quot;')
         .replace(/'/g, '&#39;');
+}
+
+function escapeJS(s) {
+    if (!s) return '';
+    return String(s)
+        .replace(/\\/g, '\\\\')
+        .replace(/'/g, "\\'")
+        .replace(/"/g, '\\"')
+        .replace(/\n/g, '\\n')
+        .replace(/\r/g, '\\r');
 }
 
 function showStatus(message, type) {
