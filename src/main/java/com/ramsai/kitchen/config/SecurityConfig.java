@@ -29,13 +29,14 @@ public class SecurityConfig {
                 .requestMatchers("/api/v1/auth/**").permitAll()
                 // 2. Public Static Resources
                 .requestMatchers(
-                    "/", 
-                    "/*.html", 
-                    "/static/**", 
-                    "/css/**", 
-                    "/js/**", 
-                    "/images/**", 
-                    "/uploads/**", 
+                    "/",
+                    "/*.html",
+                    "/static/**",
+                    "/css/**",
+                    "/js/**",
+                    "/images/**",
+                    "/uploads/**",
+                    "/ws/**",
                     "/error"
                 ).permitAll()
 

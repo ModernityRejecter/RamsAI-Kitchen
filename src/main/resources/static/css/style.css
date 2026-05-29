@@ -1227,3 +1227,51 @@ nav ul li a.active {
     font: inherit;
 }
 
+/* Toast notifications (kitchen board + live order tracking) */
+.toast-container {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    z-index: 2000;
+    pointer-events: none;
+}
+.toast {
+    background: var(--secondary-color, #2c3e50);
+    color: #fff;
+    padding: 12px 18px;
+    border-radius: 10px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.25);
+    font-size: 0.9rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    opacity: 0;
+    transform: translateX(20px);
+    transition: opacity 0.3s ease, transform 0.3s ease;
+}
+.toast.show { opacity: 1; transform: none; }
+.toast i { color: var(--primary-color, #f39c12); }
+.toast.toast-ready { background: #1e7f3a; }
+.toast.toast-ready i { color: #d2f5dd; }
+
+/* Live-tracking indicator on the My Orders page */
+.live-indicator {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    padding: 4px 11px;
+    border-radius: 999px;
+    background: #eee;
+    color: #777;
+    vertical-align: middle;
+}
+.live-indicator .dot { width: 8px; height: 8px; border-radius: 50%; background: #aaa; }
+.live-indicator.live { background: #e6f6ec; color: #1e7f3a; }
+.live-indicator.live .dot { background: #22c55e; box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.2); }
+

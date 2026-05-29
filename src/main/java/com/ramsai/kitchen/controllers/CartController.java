@@ -2,8 +2,10 @@ package com.ramsai.kitchen.controllers;
 
 import com.ramsai.kitchen.models.dtos.CartItemRequest;
 import com.ramsai.kitchen.models.dtos.CartResponse;
+import com.ramsai.kitchen.models.dtos.OrderResponse;
 import com.ramsai.kitchen.models.entities.User;
 import com.ramsai.kitchen.services.CartService;
+import com.ramsai.kitchen.services.KitchenBroadcastService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -18,6 +20,7 @@ import java.util.Map;
 public class CartController {
 
     private final CartService cartService;
+    private final KitchenBroadcastService kitchenBroadcastService;
 
     @GetMapping
     public ResponseEntity<Map<String, Object>> getCart(@AuthenticationPrincipal User user) {
@@ -54,7 +57,8 @@ public class CartController {
     public ResponseEntity<Map<String, Object>> checkout(
             @AuthenticationPrincipal User user,
             @RequestParam Long tableId) {
-        cartService.checkout(user.getId(), tableId);
+        OrderResponse order = cartService.checkout(user.getId(), tableId);
+        kitchenBroadcastService.broadcastOrderUpdate(order);
         return ResponseEntity.ok(Map.of(
                 "message", "Checkout successful. Your order is being prepared!"
         ));

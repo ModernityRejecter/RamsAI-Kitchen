@@ -2,6 +2,7 @@ package com.ramsai.kitchen.services;
 
 import com.ramsai.kitchen.enums.OrderStatus;
 import com.ramsai.kitchen.mappers.OrderItemMapper;
+import com.ramsai.kitchen.mappers.OrderMapper;
 import com.ramsai.kitchen.models.entities.Order;
 import com.ramsai.kitchen.models.entities.RestaurantTable;
 import com.ramsai.kitchen.repositories.OrderRepository;
@@ -33,6 +34,9 @@ class CartServiceTest {
 
     @Mock
     private OrderItemMapper orderItemMapper;
+
+    @Mock
+    private OrderMapper orderMapper;
 
     @Mock
     private InventoryService inventoryService;

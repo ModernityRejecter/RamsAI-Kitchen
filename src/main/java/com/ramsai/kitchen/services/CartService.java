@@ -3,9 +3,11 @@ package com.ramsai.kitchen.services;
 import com.ramsai.kitchen.enums.OrderStatus;
 import com.ramsai.kitchen.enums.ItemStatus;
 import com.ramsai.kitchen.mappers.OrderItemMapper;
+import com.ramsai.kitchen.mappers.OrderMapper;
 import com.ramsai.kitchen.models.dtos.CartItemRequest;
 import com.ramsai.kitchen.models.dtos.CartResponse;
 import com.ramsai.kitchen.models.dtos.OrderItemResponse;
+import com.ramsai.kitchen.models.dtos.OrderResponse;
 import com.ramsai.kitchen.models.entities.Order;
 import com.ramsai.kitchen.models.entities.OrderItem;
 import com.ramsai.kitchen.models.entities.Product;
@@ -32,6 +34,7 @@ public class CartService {
     private final ProductRepository productRepository;
     private final RestaurantTableRepository tableRepository;
     private final OrderItemMapper orderItemMapper;
+    private final OrderMapper orderMapper;
     private final InventoryService inventoryService;
 
     @Transactional
@@ -88,7 +91,7 @@ public class CartService {
     }
 
     @Transactional
-    public void checkout(Long customerId, Long tableId) {
+    public OrderResponse checkout(Long customerId, Long tableId) {
         Order cart = orderRepository.findByCustomerIdAndStatus(customerId, OrderStatus.DRAFT)
                 .orElseThrow(() -> new RuntimeException("No active cart found"));
 
@@ -116,6 +119,7 @@ public class CartService {
         cart.setStatus(OrderStatus.RECEIVED);
         orderRepository.save(cart);
         log.info("Order {} checked out for table {}", cart.getId(), tableId);
+        return orderMapper.toResponse(cart);
     }
 
     private Order getOrCreateDraftOrder(Long customerId) {
