@@ -180,7 +180,7 @@ function renderCurrentOrderCard(order) {
     const orderStatus = order.status || 'RECEIVED';
     const items = Array.isArray(order.items) ? order.items : [];
     const total = formatMoney(order.totalPrice);
-    const placed = formatDateTime(order.createdAt);
+    const placed = formatDateTime(order.placedAt || order.createdAt);
 
     return `
         <article class="order-card order-card-current">
@@ -286,7 +286,7 @@ function renderHistoryRow(order) {
     const items = Array.isArray(order.items) ? order.items : [];
     const status = order.status || 'RECEIVED';
     const tableLabel = order.tableNumber != null ? `Table ${order.tableNumber}` : 'No table';
-    const placed = formatDateTime(order.createdAt);
+    const placed = formatDateTime(order.placedAt || order.createdAt);
 
     return `
         <article class="history-row ${expanded ? 'expanded' : ''}" data-order-id="${id}">

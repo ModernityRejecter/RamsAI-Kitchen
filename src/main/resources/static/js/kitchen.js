@@ -82,7 +82,7 @@ function renderAll() {
     [...orders.values()].forEach(o => { if (byColumn[o.status]) byColumn[o.status].push(o); });
 
     KDS_COLUMNS.forEach(status => {
-        const list = byColumn[status].sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+        const list = byColumn[status].sort((a, b) => new Date(a.placedAt || a.createdAt) - new Date(b.placedAt || b.createdAt));
         document.getElementById(`count-${status}`).textContent = list.length;
         const col = document.getElementById(`col-${status}`);
         col.innerHTML = list.length
@@ -104,7 +104,7 @@ function renderCard(order) {
         <article class="kds-card" data-order-id="${order.id}">
             <div class="kds-card-head">
                 <div><span class="kds-order-id">#${order.id}</span>${table}</div>
-                <span class="kds-elapsed" data-created="${order.createdAt}">${formatElapsed(order.createdAt)}</span>
+                <span class="kds-elapsed" data-created="${order.placedAt || order.createdAt}">${formatElapsed(order.placedAt || order.createdAt)}</span>
             </div>
             <ul class="kds-items">
                 ${items.map(renderItem).join('') || '<li class="kds-item">No items.</li>'}
