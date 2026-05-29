@@ -5,8 +5,6 @@ import com.ramsai.kitchen.exceptions.ResourceNotFoundException;
 import com.ramsai.kitchen.mappers.ReviewMapper;
 import com.ramsai.kitchen.models.dtos.ReviewRequest;
 import com.ramsai.kitchen.models.dtos.ReviewResponse;
-import com.ramsai.kitchen.models.entities.Order;
-import com.ramsai.kitchen.models.entities.OrderItem;
 import com.ramsai.kitchen.models.entities.Product;
 import com.ramsai.kitchen.models.entities.Review;
 import com.ramsai.kitchen.models.entities.User;
@@ -46,11 +44,7 @@ public class ReviewService {
                 .orElseThrow(() -> new ResourceNotFoundException("Product not found"));
 
         // Check if the user has a completed order with this product
-        List<Order> customerOrders = orderRepository.findCustomerOrders(customerId, OrderStatus.DRAFT);
-        boolean hasOrdered = customerOrders.stream()
-                .filter(o -> o.getStatus() == OrderStatus.SERVED)
-                .flatMap(o -> o.getItems().stream())
-                .anyMatch(item -> item.getProduct().getId().equals(request.productId()));
+        boolean hasOrdered = orderRepository.hasCustomerOrderedProduct(customerId, request.productId(), OrderStatus.SERVED);
 
         if (!hasOrdered) {
             throw new IllegalArgumentException("You can only review products you have ordered and consumed (order must be SERVED).");

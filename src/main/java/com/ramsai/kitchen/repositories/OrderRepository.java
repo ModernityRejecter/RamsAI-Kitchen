@@ -3,6 +3,8 @@ package com.ramsai.kitchen.repositories;
 import com.ramsai.kitchen.enums.OrderStatus;
 import com.ramsai.kitchen.models.entities.Order;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -43,4 +45,9 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
         "WHERE o.id = :id"
     )
     Optional<Order> findByIdForKitchen(Long id);
+
+    @Query("SELECT count(o) > 0 " +
+           "FROM Order o JOIN o.items i " +
+           "WHERE o.customerId = :customerId AND i.product.id = :productId AND o.status = :status")
+    boolean hasCustomerOrderedProduct(@Param("customerId") Long customerId, @Param("productId") Long productId, @Param("status") OrderStatus status);
 }

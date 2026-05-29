@@ -337,7 +337,7 @@ function createProductCard(product) {
         <div class="menu-card-content">
             <div class="menu-card-header">
                 <h3>${product.name}</h3>
-                <div class="rating">
+                <div class="rating" style="cursor: pointer;" onclick="showProductReviewsModal(${product.id}, '${escapeJS(product.name)}', ${product.averageRating})">
                     ${getRatingStars(product.averageRating)}
                 </div>
             </div>
@@ -369,6 +369,74 @@ function getRatingStars(rating) {
 function updateActiveFilter(clickedBtn) {
     document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
     clickedBtn.classList.add('active');
+}
+
+async function showProductReviewsModal(productId, productName, averageRating) {
+    let modal = document.getElementById('productReviewsModal');
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'productReviewsModal';
+        modal.className = 'modal-overlay';
+        document.body.appendChild(modal);
+    }
+
+    modal.innerHTML = `
+        <div class="modal-content reviews-display-modal">
+            <span class="close-modal" onclick="closeProductReviewsModal()">&times;</span>
+            <h2>Reviews for ${productName}</h2>
+            <div class="reviews-summary">
+                <div class="rating-big">
+                    ${getRatingStars(averageRating)}
+                </div>
+                <span>${averageRating.toFixed(1)} average rating</span>
+            </div>
+            <div id="reviewsList" class="reviews-list">
+                <p>Loading reviews...</p>
+            </div>
+        </div>
+    `;
+    modal.style.display = 'flex';
+
+    try {
+        const response = await fetch(`/api/v1/products/${productId}/reviews`);
+        const result = await response.json();
+        const reviewsList = document.getElementById('reviewsList');
+
+        if (response.ok && result.data.length > 0) {
+            reviewsList.innerHTML = result.data.map(review => `
+                <div class="review-item">
+                    <div class="review-header">
+                        <strong>${review.customerName}</strong>
+                        <div class="rating-small">${getRatingStars(review.rating)}</div>
+                    </div>
+                    <p class="review-comment">${review.comment || '<em>No comment provided.</em>'}</p>
+                    <small class="review-date">${new Date(review.createdAt).toLocaleDateString()}</small>
+                </div>
+            `).join('');
+        } else {
+            reviewsList.innerHTML = '<p>No reviews yet. Be the first to review this product!</p>';
+        }
+    } catch (error) {
+        document.getElementById('reviewsList').innerHTML = '<p>Could not load reviews.</p>';
+        console.error('Error fetching reviews:', error);
+    }
+}
+
+function closeProductReviewsModal() {
+    let modal = document.getElementById('productReviewsModal');
+    if (modal) {
+        modal.style.display = 'none';
+    }
+}
+
+function escapeJS(s) {
+    if (!s) return '';
+    return String(s)
+        .replace(/\\/g, '\\\\')
+        .replace(/'/g, "\\'")
+        .replace(/"/g, '\\"')
+        .replace(/\n/g, '\\n')
+        .replace(/\r/g, '\\r');
 }
 
 // Global filter for "All"
