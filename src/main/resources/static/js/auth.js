@@ -139,9 +139,9 @@ function updateUIForAuthenticatedUser(username, role) {
             <li><a href="profile.html">Profile</a></li>
             ${role === 'MANAGER' ? '<li><a href="audit.html">Audit Logs</a></li>' : ''}
             ${role === 'CHEF' || role === 'MANAGER' ? `<li><a href="manager.html">${role === 'MANAGER' ? 'Manager' : 'Console'}</a></li>` : ''}
-            ${role === 'CHEF' || role === 'MANAGER' ? '<li><a href="kitchen.html">Kitchen</a></li>' : ''}
+            ${role === 'CHEF' || role === 'MANAGER' ? '<li><a href="kitchen.html" id="navKitchen">Kitchen</a></li>' : ''}
             ${role === 'CUSTOMER' || role === 'WAITER' || role === 'MANAGER' ? '<li><a href="tables.html">Tables</a></li>' : ''}
-            ${role === 'CUSTOMER' || role === 'WAITER' || role === 'MANAGER' ? '<li><a href="my-orders.html">My Orders</a></li>' : ''}
+            ${role === 'CUSTOMER' || role === 'WAITER' || role === 'MANAGER' ? '<li><a href="my-orders.html" id="navMyOrders">My Orders</a></li>' : ''}
             <li><a href="#" id="logoutBtn">Logout (${username})</a></li>
             <li><a href="order.html" id="cartLink"><i class="fas fa-shopping-cart"></i> <span id="cartCount">0</span></a></li>
         `;
@@ -154,7 +154,35 @@ function updateUIForAuthenticatedUser(username, role) {
         });
 
         updateCartCount();
+        applyNavNotificationDots();
     }
+}
+
+// Notification dots on the nav. A notification "comes from" a page (kitchen / my-orders);
+// we flag its nav link with a dot unless the user is already viewing that page. The flag is
+// kept in sessionStorage so it survives navigation, and is cleared once that page is opened.
+const NAV_NOTIF_PAGES = { kitchen: 'navKitchen', 'my-orders': 'navMyOrders' };
+
+function markNavNotification(page) {
+    if (window.location.pathname.endsWith(`${page}.html`)) return;
+    sessionStorage.setItem(`navNotif_${page}`, '1');
+    setNavDot(page, true);
+}
+
+function applyNavNotificationDots() {
+    Object.keys(NAV_NOTIF_PAGES).forEach(page => {
+        if (window.location.pathname.endsWith(`${page}.html`)) {
+            sessionStorage.removeItem(`navNotif_${page}`);
+            setNavDot(page, false);
+        } else if (sessionStorage.getItem(`navNotif_${page}`) === '1') {
+            setNavDot(page, true);
+        }
+    });
+}
+
+function setNavDot(page, on) {
+    const link = document.getElementById(NAV_NOTIF_PAGES[page]);
+    if (link) link.classList.toggle('has-notif', on);
 }
 
 async function updateCartCount() {
@@ -240,6 +268,7 @@ function initKitchenNotifications() {
                     const order = JSON.parse(msg.body);
                     if (order && order.id != null && order.status === 'RECEIVED') {
                         playKitchenAlert();
+                        markNavNotification('kitchen');
                         window.dispatchEvent(new CustomEvent('kitchenOrderArrived', { detail: order }));
                     }
                 } catch (e) { /* ignore */ }
@@ -250,19 +279,26 @@ function initKitchenNotifications() {
     });
 }
 
-function initOrderNotifications() {
+async function initOrderNotifications() {
     if (orderClient) return;
+    // The server pushes each of a customer's order updates to /topic/customers/{id}/orders.
+    const userId = await fetchCurrentUserId();
+    if (userId == null) return;
     const knownOrderStatuses = new Map();
     orderClient = createRealtimeClient({
         onConnect: (client) => {
-            client.subscribe('/topic/my-orders', (msg) => {
+            client.subscribe(`/topic/customers/${userId}/orders`, (msg) => {
                 try {
                     const order = JSON.parse(msg.body);
                     if (order && order.id != null) {
                         const prev = knownOrderStatuses.get(order.id);
                         knownOrderStatuses.set(order.id, order.status);
-                        if (order.status === 'SERVED' && prev !== 'SERVED') {
+                        // The my-orders page does its own per-order live tracking (sound + toast),
+                        // so only fire the global alert/dot when the customer is on another page.
+                        if (order.status === 'SERVED' && prev !== 'SERVED'
+                                && !window.location.pathname.endsWith('my-orders.html')) {
                             playOrderAlert();
+                            markNavNotification('my-orders');
                             window.dispatchEvent(new CustomEvent('orderServed', { detail: order }));
                         }
                     }
@@ -272,6 +308,17 @@ function initOrderNotifications() {
         onDisconnect: () => { orderClient = null; },
         onError: () => { orderClient = null; }
     });
+}
+
+async function fetchCurrentUserId() {
+    try {
+        const res = await authenticatedFetch('/api/v1/user/me');
+        if (!res.ok) return null;
+        const json = await res.json();
+        return json.data && json.data.id != null ? json.data.id : null;
+    } catch (e) {
+        return null;
+    }
 }
 
 document.addEventListener('DOMContentLoaded', () => {

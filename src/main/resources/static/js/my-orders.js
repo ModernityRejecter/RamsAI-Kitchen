@@ -1,8 +1,8 @@
 const ORDER_STATUS_FLOW = ['RECEIVED', 'COOKING', 'READY', 'SERVED'];
 const ITEM_STATUS_FLOW = ['PENDING', 'COOKING', 'READY', 'SERVED'];
 
-let soundEnabled = true;
-let audioCtx = null;
+// soundEnabled / audioCtx are declared globally in auth.js (the page-wide notification
+// system). Re-declaring them here with `let` throws a SyntaxError that aborts this whole file.
 // Polling is now a safety net behind realtime push, so it can run less often.
 const REFRESH_INTERVAL_MS = 30000;
 
