@@ -3,6 +3,7 @@ package com.ramsai.kitchen.repositories;
 import com.ramsai.kitchen.models.entities.Review;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -21,4 +22,7 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
 
     @Query("SELECT AVG(CAST(r.rating AS double)) FROM Review r WHERE r.product.id = :productId")
     Double getAverageRatingForProduct(Long productId);
+
+    @Query("SELECT r FROM Review r JOIN FETCH r.product WHERE r.createdAt >= :startDate")
+    List<Review> findAllByCreatedAtAfter(@Param("startDate") java.time.LocalDateTime startDate);
 }

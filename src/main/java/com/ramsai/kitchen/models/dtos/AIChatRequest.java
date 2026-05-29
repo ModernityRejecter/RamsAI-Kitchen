@@ -1,3 +1,8 @@
 package com.ramsai.kitchen.models.dtos;
 
-public record AIChatRequest(String content) {}
+import jakarta.validation.constraints.NotBlank;
+
+public record AIChatRequest(
+    @NotBlank(message = "Message content cannot be empty")
+    String content
+) {}
