@@ -24,4 +24,23 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
         "ORDER BY o.createdAt DESC"
     )
     List<Order> findCustomerOrders(Long customerId, OrderStatus excluded);
+
+    @org.springframework.data.jpa.repository.Query(
+        "SELECT DISTINCT o FROM Order o " +
+        "LEFT JOIN FETCH o.items i " +
+        "LEFT JOIN FETCH i.product " +
+        "LEFT JOIN FETCH o.table " +
+        "WHERE o.status IN :statuses " +
+        "ORDER BY o.createdAt ASC"
+    )
+    List<Order> findForKitchenByStatuses(List<OrderStatus> statuses);
+
+    @org.springframework.data.jpa.repository.Query(
+        "SELECT DISTINCT o FROM Order o " +
+        "LEFT JOIN FETCH o.items i " +
+        "LEFT JOIN FETCH i.product " +
+        "LEFT JOIN FETCH o.table " +
+        "WHERE o.id = :id"
+    )
+    Optional<Order> findByIdForKitchen(Long id);
 }

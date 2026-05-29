@@ -1,6 +1,7 @@
 const ORDER_STATUS_FLOW = ['RECEIVED', 'COOKING', 'READY', 'SERVED'];
 const ITEM_STATUS_FLOW = ['PENDING', 'COOKING', 'READY', 'SERVED'];
-const REFRESH_INTERVAL_MS = 15000;
+// Polling is now a safety net behind realtime push, so it can run less often.
+const REFRESH_INTERVAL_MS = 30000;
 
 let currentUserId = null;
 let currentTableId = null;
@@ -8,6 +9,13 @@ let currentTableNumber = null;
 let expandedHistoryIds = new Set();
 let refreshTimer = null;
 let myReviewsMap = new Map();
+
+// Realtime live-tracking state
+let liveClient = null;
+let liveConnected = false;
+const orderSubs = new Map();          // orderId -> STOMP subscription
+const lastKnownStatus = new Map();    // orderId -> last seen status (to detect transitions)
+let liveRefreshTimer = null;
 
 document.addEventListener('DOMContentLoaded', async () => {
     const token = localStorage.getItem('token') || sessionStorage.getItem('token');
@@ -22,11 +30,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     await loadAll(true);
+    connectLiveTracking();
     refreshTimer = setInterval(() => loadAll(false), REFRESH_INTERVAL_MS);
 });
 
 window.addEventListener('beforeunload', () => {
     if (refreshTimer) clearInterval(refreshTimer);
+    if (liveClient) { try { liveClient.deactivate(); } catch (e) { /* ignore */ } }
 });
 
 async function loadAll(showLoading) {
@@ -43,9 +53,12 @@ async function loadAll(showLoading) {
         currentTableId = occupied ? occupied.id : null;
         currentTableNumber = occupied ? occupied.tableNumber : null;
 
+        const currentOrders = filterCurrentOrders(orders, tables, occupied);
         renderCurrentTableLabel();
-        renderCurrentOrders(filterCurrentOrders(orders, tables, occupied));
+        renderCurrentOrders(currentOrders);
         renderHistoryOrders(filterHistoryOrders(orders, tables, occupied));
+        trackOrders(currentOrders);
+        updateLiveIndicator();
     } catch (err) {
         console.error('Failed to load my orders:', err);
         showStatus('Could not load your orders. Try again in a moment.', 'error');
@@ -299,6 +312,94 @@ function renderHistoryRow(order) {
             </div>
         </article>
     `;
+}
+
+// ---- Realtime live tracking (STOMP over SockJS, falls back to polling) ----
+
+function connectLiveTracking() {
+    liveClient = createRealtimeClient({
+        onConnect: (client) => {
+            liveConnected = true;
+            updateLiveIndicator();
+            // Broker subscriptions don't survive a reconnect — re-subscribe to all tracked orders.
+            orderSubs.clear();
+            [...lastKnownStatus.keys()].forEach(id => subscribeOrder(id));
+        },
+        onDisconnect: () => { liveConnected = false; orderSubs.clear(); updateLiveIndicator(); },
+        onError: () => { liveConnected = false; updateLiveIndicator(); }
+    });
+    updateLiveIndicator();
+}
+
+// Keep STOMP subscriptions aligned with the orders currently shown for this table.
+function trackOrders(currentOrders) {
+    const next = new Set(currentOrders.map(o => o.id));
+    currentOrders.forEach(o => {
+        if (!lastKnownStatus.has(o.id)) lastKnownStatus.set(o.id, o.status);
+    });
+    next.forEach(id => subscribeOrder(id));
+    orderSubs.forEach((sub, id) => {
+        if (!next.has(id)) {
+            try { sub.unsubscribe(); } catch (e) { /* ignore */ }
+            orderSubs.delete(id);
+            lastKnownStatus.delete(id);
+        }
+    });
+}
+
+function subscribeOrder(id) {
+    if (!liveClient || !liveConnected || orderSubs.has(id)) return;
+    const sub = liveClient.subscribe(`/topic/orders/${id}`, (msg) => {
+        try { onOrderEvent(JSON.parse(msg.body)); } catch (e) { /* ignore */ }
+    });
+    orderSubs.set(id, sub);
+}
+
+function onOrderEvent(order) {
+    if (!order || order.id == null) return;
+    const prev = lastKnownStatus.get(order.id);
+    lastKnownStatus.set(order.id, order.status);
+    if (order.status === 'READY' && prev !== 'READY') {
+        showToast(`Order #${order.id} is ready to serve!`, 'toast-ready');
+    }
+    scheduleLiveRefresh();
+}
+
+// Coalesce bursts of events into a single refresh.
+function scheduleLiveRefresh() {
+    if (liveRefreshTimer) return;
+    liveRefreshTimer = setTimeout(() => {
+        liveRefreshTimer = null;
+        loadAll(false);
+    }, 350);
+}
+
+function updateLiveIndicator() {
+    const el = document.getElementById('liveIndicator');
+    if (!el) return;
+    if (currentTableId == null) { el.style.display = 'none'; return; }
+    el.style.display = 'inline-flex';
+    el.className = `live-indicator ${liveConnected ? 'live' : ''}`;
+    el.innerHTML = `<span class="dot"></span> ${liveConnected ? 'Live' : 'Offline'}`;
+}
+
+function showToast(message, extraClass) {
+    let container = document.getElementById('toastContainer');
+    if (!container) {
+        container = document.createElement('div');
+        container.id = 'toastContainer';
+        container.className = 'toast-container';
+        document.body.appendChild(container);
+    }
+    const toast = document.createElement('div');
+    toast.className = `toast ${extraClass || ''}`;
+    toast.innerHTML = `<i class="fas fa-bell-concierge"></i> ${escapeHtml(message)}`;
+    container.appendChild(toast);
+    setTimeout(() => toast.classList.add('show'), 10);
+    setTimeout(() => {
+        toast.classList.remove('show');
+        setTimeout(() => toast.remove(), 300);
+    }, 5000);
 }
 
 // Review Modal Logic
