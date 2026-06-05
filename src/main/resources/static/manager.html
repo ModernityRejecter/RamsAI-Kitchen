@@ -507,7 +507,6 @@
     </div>
 
     <div class="manager-grid">
-        <!-- 1. Create Product -->
         <div class="manager-card">
             <h3><i class="fas fa-box-open"></i> <span id="createProductHeader">Create Product</span></h3>
             <p id="createProductDesc">Define new menu items and pricing.</p>
@@ -537,7 +536,6 @@
             </form>
         </div>
 
-        <!-- Product Management & Approvals Card -->
         <div class="manager-card wide-card" id="productManagementCard">
             <h3><i class="fas fa-clipboard-list"></i> Product & Menu Control</h3>
             <p id="productManagementDesc">Approve proposed items, toggle visibility on the menu, and review feedback.</p>
@@ -562,13 +560,11 @@
                         </tr>
                     </thead>
                     <tbody id="productManagementTableBody">
-                        <!-- Dynamic items -->
-                    </tbody>
+                        </tbody>
                 </table>
             </div>
         </div>
 
-        <!-- 2. Create Ingredient -->
         <div class="manager-card wide-card" id="createIngredientCard">
             <h3><i class="fas fa-leaf"></i> Create Ingredient</h3>
             <p>Register raw materials used in your recipes.</p>
@@ -592,7 +588,6 @@
                 <div class="status-box" id="ingredientStatus"></div>
             </form>
         </div>
-        <!-- Manage Ingredients Card -->
         <div class="manager-card wide-card" id="manageIngredientCard">
             <h3><i class="fas fa-leaf"></i> Manage Ingredients</h3>
             <p>Edit existing ingredients, adjust stock, or delete.</p>
@@ -606,7 +601,6 @@
             </div>
         </div>
 
-        <!-- 3. Recipe Management (BOM) -->
         <div class="manager-card wide-card" id="recipeManagementCard">
             <h3><i class="fas fa-mortar-pestle"></i> Recipe Management</h3>
             <p>Link ingredients to products to automatically track stock consumption.</p>
@@ -630,7 +624,6 @@
             </div>
         </div>
 
-        <!-- 5. Low Stock Alert -->
         <div class="manager-card">
             <h3><i class="fas fa-exclamation-triangle"></i> Low Stock Alerts</h3>
             <p>Ingredients that have fallen below their minimum threshold.</p>
@@ -643,8 +636,43 @@
                 </table>
             </div>
         </div>
-    </div>
-    <!-- Edit Product Modal -->
+
+        <div class="manager-card wide-card" id="managerDashboardCard">
+            <h3><i class="fas fa-chart-line"></i> Sales & Popularity Dashboard</h3>
+            <p>Visual reports of purchased products, sorted by popularity and categorized with average review ratings.</p>
+            
+            <div class="filter-tabs">
+                <input type="text" id="dashboardSearch" placeholder="Filter by product or category..." style="padding: 6px 12px; border-radius: 20px; border: 1px solid var(--border-color); font-size: 0.85rem; max-width: 250px; margin-right: auto; outline: none;">
+                <button type="button" class="tab-btn active" id="btn-chart-view">Charts</button>
+                <button type="button" class="tab-btn" id="btn-table-view">Table View</button>
+            </div>
+
+            <div id="dashboardChartsSection" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; width: 100%;">
+                <div style="max-height: 300px; position: relative;">
+                    <canvas id="popularityChart"></canvas>
+                </div>
+                <div style="max-height: 300px; position: relative;">
+                    <canvas id="ratingsChart"></canvas>
+                </div>
+            </div>
+
+            <div id="dashboardTableSection" class="table-wrap" style="display: none; margin-top: 20px;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Product Name</th>
+                            <th>Category</th>
+                            <th>Sales Count (Popularity)</th>
+                            <th>Avg Rating</th>
+                        </tr>
+                    </thead>
+                    <tbody id="dashboardTableBody"></tbody>
+                </table>
+            </div>
+            <div id="dashboardPerformanceCheck" style="display: none;"></div>
+        </div>
+        </div>
+    
     <div id="editProductModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
@@ -689,7 +717,6 @@
         </div>
     </div>
 
-    <!-- Edit Ingredient Modal -->
     <div id="editIngredientModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
@@ -724,7 +751,6 @@
         </div>
     </div>
 
-    <!-- Rejection Modal -->
     <div id="rejectionModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
@@ -741,12 +767,15 @@
             </div>
         </div>
     </div>
+</section>
 
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1.6.1/dist/sockjs.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@stomp/stompjs@7.0.0/bundles/stomp.umd.min.js"></script>
 <script src="js/realtime.js"></script>
 <script src="js/auth.js"></script>
 <script src="js/manager.js"></script>
+<script src="js/dashboard.js"></script>
 </body>
 </html>
 

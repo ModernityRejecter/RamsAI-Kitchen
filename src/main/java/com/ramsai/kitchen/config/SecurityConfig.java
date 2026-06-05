@@ -60,7 +60,10 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.POST, "/api/v1/inventory/products/*/ingredients").hasAnyRole("MANAGER", "CHEF")
                 .requestMatchers(HttpMethod.DELETE, "/api/v1/inventory/product-ingredients/*").hasAnyRole("MANAGER", "CHEF")
 
-                // 5. Other Manager specific endpoints
+              // 5. Other Manager specific endpoints
+                .requestMatchers("/api/v1/manager/dashboard/popularity").hasRole("MANAGER")
+                .requestMatchers("/api/v1/manager/dashboard/ratings").hasRole("MANAGER")
+                .requestMatchers("/api/v1/ratings/**").hasRole("MANAGER") // SBLOCCO AGGIUNTIVO DI SICUREZZA
                 .requestMatchers("/api/v1/manager/**").hasRole("MANAGER")
                 .requestMatchers(HttpMethod.POST, "/api/v1/inventory/**").hasRole("MANAGER")
                 .requestMatchers(HttpMethod.PUT, "/api/v1/inventory/**").hasRole("MANAGER")
