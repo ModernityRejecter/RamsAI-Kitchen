@@ -33,7 +33,7 @@
             <p>Experience the perfect fusion of culinary art and artificial intelligence. Tailored flavors, real-time precision.</p>
             <div class="hero-btns">
                 <a href="menu.html" class="cta-button">Explore Menu</a>
-                <a href="register.html" class="cta-button secondary">Join the Experience</a>
+                <a href="register.html" id="joinBtn" class="cta-button secondary">Join the Experience</a>
             </div>
         </div>
     </section>
@@ -107,5 +107,18 @@
     <script src="https://cdn.jsdelivr.net/npm/@stomp/stompjs@7.0.0/bundles/stomp.umd.min.js"></script>
     <script src="js/realtime.js"></script>
     <script src="js/auth.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Recuperiamo i dati dallo storage
+            const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+            const role = localStorage.getItem('role') || sessionStorage.getItem('role');
+            const joinBtn = document.getElementById('joinBtn');
+        
+            // Se l'utente ha un token e un ruolo, è loggato -> nascondiamo il bottone
+            if (token && role && joinBtn) {
+                joinBtn.style.display = 'none';
+            }
+        });
+    </script>
 </body>
 </html>
