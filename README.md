@@ -100,3 +100,19 @@ This project includes **pgAdmin** to help you manage the PostgreSQL database thr
 
 ### 13. Real-time Menu Control
 **As a manager**, I want to be able to activate or deactivate products in the digital menu in real-time so that customers cannot order dishes whose ingredients have run out.
+
+---
+
+## 🔐 Security Testing & Role Architecture
+
+We have expanded the test coverage to enforce role-based security isolation across all core restaurant domains (Cart/Order, Kitchen transitions, Inventory automation, Review constraints, and Product approvals).
+
+### Automated Security Suites
+- **`ManagerConsoleSecurityTest`**: Ensures core dashboard administrative operations are isolated to the `MANAGER` role.
+- **`CriticalDomainsIntegrationTest`**: Verifies permission workflows for operations spanning ingredient manipulation (`CHEF`/`MANAGER`) and state updates.
+- **`BasicSmokeEndToEndTest`**: Evaluates smoke end-to-end access patterns for all primary system personas (`CUSTOMER`, `WAITER`, `CHEF`, `MANAGER`).
+
+### How to Run Security Tests via Docker
+To isolate environment versions (Java 17 runtime compliance) and evaluate security roles against an in-memory H2 simulation context, execute this command from the root directory:
+```powershell
+docker run --rm -v "${PWD}:/app" -w /app maven:3.9.6-eclipse-temurin-17 mvn test "-Dtest=ManagerConsoleSecurityTest,CriticalDomainsIntegrationTest,BasicSmokeEndToEndTest"
