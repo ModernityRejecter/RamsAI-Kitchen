@@ -146,7 +146,7 @@ async function checkout() {
             sessionStorage.removeItem('selectedTableId');
             sessionStorage.removeItem('selectedTableNumber');
             alert('Order placed successfully! Redirecting...');
-            window.location.href = 'index.html';
+            window.location.href = 'my-orders.html';
         } else {
             const error = await response.json();
             alert(error.message || 'Checkout failed');

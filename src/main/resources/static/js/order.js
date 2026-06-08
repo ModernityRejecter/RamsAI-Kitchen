@@ -147,8 +147,8 @@ function setupOrderUI() {
                 if (response.ok) {
                     sessionStorage.removeItem('selectedTableId');
                     sessionStorage.removeItem('selectedTableNumber');
-                    alert('Order placed successfully! Redirecting to home...');
-                    window.location.href = 'index.html';
+                    alert('Order placed successfully! Redirecting to my orders...');
+                    window.location.href = 'my-orders.html';
                 } else {
                     const error = await response.json();
                     alert(error.message || 'Checkout failed');
