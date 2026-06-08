@@ -69,6 +69,7 @@ public class SecurityConfig {
                 
                 // 5. Chef/Manager shared endpoints
                 .requestMatchers("/api/v1/kitchen/**").hasAnyRole("CHEF", "MANAGER")
+                .requestMatchers("/api/v1/ai-chat/**").hasAnyRole("CHEF", "MANAGER")
                 .requestMatchers("/api/v1/ai/**").hasAnyRole("CHEF", "MANAGER")
                 .requestMatchers("/api/v1/inventory/**").hasAnyRole("CHEF", "MANAGER")
                 

@@ -24,6 +24,9 @@ class TableServiceTest {
     private RestaurantTableRepository tableRepository;
 
     @Mock
+    private com.ramsai.kitchen.repositories.RestaurantWallRepository wallRepository;
+
+    @Mock
     private OrderRepository orderRepository;
 
     @InjectMocks
@@ -44,6 +47,7 @@ class TableServiceTest {
     void updateTablePosition_Success() {
         when(tableRepository.findById(1L)).thenReturn(Optional.of(table));
         when(tableRepository.findByXposAndYpos(5, 5)).thenReturn(Optional.empty());
+        when(wallRepository.findByXposAndYpos(5, 5)).thenReturn(Optional.empty());
         when(tableRepository.save(any(RestaurantTable.class))).thenReturn(table);
 
         TableResponse response = tableService.updateTablePosition(1L, 5, 5);
@@ -70,6 +74,7 @@ class TableServiceTest {
     void updateTablePosition_SameTableOverlapSuccess() {
         when(tableRepository.findById(1L)).thenReturn(Optional.of(table));
         when(tableRepository.findByXposAndYpos(0, 0)).thenReturn(Optional.of(table));
+        when(wallRepository.findByXposAndYpos(0, 0)).thenReturn(Optional.empty());
         when(tableRepository.save(any(RestaurantTable.class))).thenReturn(table);
 
         TableResponse response = tableService.updateTablePosition(1L, 0, 0);

@@ -13,6 +13,12 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import org.mockito.MockedStatic;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
+import com.ramsai.kitchen.models.entities.User;
+
 import java.math.BigDecimal;
 import java.util.Optional;
 
@@ -160,20 +166,33 @@ class ProductServiceTest {
                 BigDecimal.valueOf(12.0)
         );
 
-        when(productRepository.findById(1L)).thenReturn(Optional.of(product));
-        when(categoryRepository.findById(1L)).thenReturn(Optional.of(category));
-        when(productRepository.save(any(Product.class))).thenReturn(product);
-        when(productMapper.toResponse(any(Product.class))).thenReturn(productResponse);
+        User chef = new User();
+        chef.setRole(User.UserRole.CHEF);
 
-        ProductResponse response = productService.updateProduct(1L, request);
+        Authentication authentication = mock(Authentication.class);
+        when(authentication.getPrincipal()).thenReturn(chef);
 
-        assertNotNull(response);
-        assertEquals("Updated Name", product.getName());
-        assertEquals("Updated Description", product.getDescription());
-        assertEquals(BigDecimal.valueOf(15.0), product.getBasePrice());
-        assertEquals(Product.ApprovalStatus.PENDING, product.getApprovalStatus());
-        assertFalse(product.isActive());
-        assertNull(product.getRejectionFeedback());
-        verify(productRepository).save(product);
+        SecurityContext securityContext = mock(SecurityContext.class);
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+
+        try (MockedStatic<SecurityContextHolder> securityContextHolderMockedStatic = mockStatic(SecurityContextHolder.class)) {
+            securityContextHolderMockedStatic.when(SecurityContextHolder::getContext).thenReturn(securityContext);
+
+            when(productRepository.findById(1L)).thenReturn(Optional.of(product));
+            when(categoryRepository.findById(1L)).thenReturn(Optional.of(category));
+            when(productRepository.save(any(Product.class))).thenReturn(product);
+            when(productMapper.toResponse(any(Product.class))).thenReturn(productResponse);
+
+            ProductResponse response = productService.updateProduct(1L, request);
+
+            assertNotNull(response);
+            assertEquals("Updated Name", product.getName());
+            assertEquals("Updated Description", product.getDescription());
+            assertEquals(BigDecimal.valueOf(15.0), product.getBasePrice());
+            assertEquals(Product.ApprovalStatus.PENDING, product.getApprovalStatus());
+            assertFalse(product.isActive());
+            assertNull(product.getRejectionFeedback());
+            verify(productRepository).save(product);
+        }
     }
 }
