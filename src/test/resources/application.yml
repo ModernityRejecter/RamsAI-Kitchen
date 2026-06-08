@@ -10,3 +10,9 @@ spring:
       ddl-auto: create-drop
   flyway:
     enabled: false
+
+gemini:
+  api:
+    key: test-api-key
+  model: gemini-1.5-flash
+  url: http://localhost:8080/gemini
