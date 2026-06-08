@@ -58,4 +58,11 @@ class CriticalDomainsIntegrationTest {
         mockMvc.perform(delete("/api/v1/inventory/ingredients/1"))
                 .andExpect(status().isForbidden());
     }
+
+    @Test
+    @WithMockUser(roles = "CHEF")
+    void chefCanAccessAiChatSessions() throws Exception {
+        mockMvc.perform(get("/api/v1/ai-chat/sessions"))
+                .andExpect(status().isOk());
+    }
 }

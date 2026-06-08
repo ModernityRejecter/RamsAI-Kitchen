@@ -34,6 +34,20 @@ public class AIChatController {
         return ResponseEntity.ok(Map.of("data", sessions, "message", "Sessions retrieved"));
     }
 
+    @GetMapping("/sessions/{sessionId}")
+    @PreAuthorize("hasAnyRole('CHEF', 'MANAGER')")
+    public ResponseEntity<Map<String, Object>> getSession(@PathVariable Long sessionId) {
+        AIChatSessionResponse session = aiChatService.getSession(sessionId);
+        return ResponseEntity.ok(Map.of("data", session, "message", "Session retrieved"));
+    }
+
+    @DeleteMapping("/sessions/{sessionId}")
+    @PreAuthorize("hasAnyRole('CHEF', 'MANAGER')")
+    public ResponseEntity<Map<String, Object>> deleteSession(@PathVariable Long sessionId) {
+        aiChatService.deleteSession(sessionId);
+        return ResponseEntity.ok(Map.of("message", "Session deleted"));
+    }
+
     @PostMapping("/sessions/{sessionId}/messages")
     @PreAuthorize("hasAnyRole('CHEF', 'MANAGER')")
     public ResponseEntity<Map<String, Object>> sendMessage(

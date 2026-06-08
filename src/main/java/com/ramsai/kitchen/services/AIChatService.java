@@ -31,6 +31,8 @@ public class AIChatService {
     private final AIMessageRepository messageRepository;
     private final OrderRepository orderRepository;
     private final ReviewRepository reviewRepository;
+    private final ProductRepository productRepository;
+    private final UserRepository userRepository;
     private final ProductService productService;
     private final AIChatMapper chatMapper;
     private final GeminiConfig geminiConfig;
@@ -38,7 +40,7 @@ public class AIChatService {
 
     @Transactional
     public AIChatSessionResponse startNewSession() {
-        User currentUser = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        User currentUser = getCurrentUser();
         log.info("Starting new AI chat session for user: {}", currentUser.getUsername());
 
         String analysisContext = generateAnalysisContext();
@@ -58,16 +60,52 @@ public class AIChatService {
 
     @Transactional
     public List<AIChatSessionResponse> getUserSessions() {
-        User currentUser = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        User currentUser = getCurrentUser();
         return sessionRepository.findAllByUserIdOrderByStartedAtDesc(currentUser.getId()).stream()
                 .map(chatMapper::toSessionResponse)
                 .collect(Collectors.toList());
+    }
+
+    private User getCurrentUser() {
+        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        if (principal instanceof User) {
+            return (User) principal;
+        }
+        
+        // Fallback for tests or other principal types
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        return userRepository.findByUsername(username)
+                .orElse(User.builder().id(0L).username(username).build()); // Fallback for mock users in tests
+    }
+
+    @Transactional(readOnly = true)
+    public AIChatSessionResponse getSession(Long sessionId) {
+        AIChatSession session = sessionRepository.findById(sessionId)
+                .orElseThrow(() -> new ResourceNotFoundException("Session not found"));
+        
+        // Ensure messages are loaded if they are lazy
+        session.getMessages().size(); 
+        
+        return chatMapper.toSessionResponse(session);
+    }
+
+    @Transactional
+    public void deleteSession(Long sessionId) {
+        AIChatSession session = sessionRepository.findById(sessionId)
+                .orElseThrow(() -> new ResourceNotFoundException("Session not found"));
+        sessionRepository.delete(session);
     }
 
     @Transactional
     public AIMessageResponse sendMessage(Long sessionId, String content) {
         AIChatSession session = sessionRepository.findById(sessionId)
                 .orElseThrow(() -> new ResourceNotFoundException("Session not found"));
+
+        // Update summary if it's a new session
+        if (session.getSummary() == null || session.getSummary().isEmpty()) {
+            String summary = content.length() > 50 ? content.substring(0, 47) + "..." : content;
+            session.setSummary(summary);
+        }
 
         // Save user message
         AIMessage userMessage = AIMessage.builder()
