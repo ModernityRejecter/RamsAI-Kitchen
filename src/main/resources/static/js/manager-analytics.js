@@ -29,8 +29,9 @@
         const kpis = [
             { label: 'Units Sold', value: (report.totalUnitsSold || 0).toLocaleString() },
             { label: 'Revenue', value: money(report.totalRevenue, 0) },
-            { label: 'Avg Rating', value: (report.overallAverageRating || 0).toFixed(1) + '★' },
-            { label: 'Categories', value: (report.categories ? report.categories.length : 0).toLocaleString() }
+            { label: 'Orders', value: (report.totalOrders || 0).toLocaleString() },
+            { label: 'Avg Order', value: money(report.averageOrderValue, 2) },
+            { label: 'Avg Rating', value: (report.overallAverageRating || 0).toFixed(1) + '★' }
         ];
         el.innerHTML = kpis.map(k =>
             `<div class="kpi"><div class="kpi-value">${k.value}</div><div class="kpi-label">${k.label}</div></div>`
@@ -48,6 +49,16 @@
         if (top.length === 0) {
             scroller.innerHTML = '<div class="analytics-empty">No sales recorded yet. Once customers place orders, charts will appear here.</div>';
             return;
+        }
+
+        const daily = report.dailySales || [];
+        if (daily.length) {
+            addChartCard({
+                type: 'line',
+                title: 'Revenue — last 30 days',
+                labels: daily.map(d => shortDate(d.date)),
+                datasets: [{ label: 'Revenue ($)', data: daily.map(d => Number(d.revenue) || 0) }]
+            });
         }
 
         addChartCard({
@@ -228,10 +239,10 @@
         const el = document.getElementById('analyticsSuggestions');
         const input = document.getElementById('analyticsQuestion');
         const suggestions = [
+            'Plot revenue per day for the last 20 days',
             'Which category brings the most revenue?',
-            'What are my 3 worst-selling products?',
             'Show a pie chart of revenue by category',
-            'Plot a bar chart of average rating per category'
+            'What are my 3 worst-selling products?'
         ];
         suggestions.forEach(s => {
             const chip = document.createElement('button');
@@ -249,6 +260,10 @@
     function money(value, decimals) {
         const n = Number(value) || 0;
         return '$' + n.toLocaleString(undefined, { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
+    }
+
+    function shortDate(iso) {
+        return (typeof iso === 'string' && iso.length >= 10) ? iso.slice(5) : String(iso == null ? '' : iso);
     }
 
     function escapeHtml(str) {

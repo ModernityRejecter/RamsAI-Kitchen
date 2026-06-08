@@ -3,7 +3,10 @@ package com.ramsai.kitchen.services;
 import com.ramsai.kitchen.config.GeminiConfig;
 import com.ramsai.kitchen.enums.OrderStatus;
 import com.ramsai.kitchen.models.dtos.*;
+import com.ramsai.kitchen.models.entities.Order;
+import com.ramsai.kitchen.models.entities.OrderItem;
 import com.ramsai.kitchen.repositories.OrderItemRepository;
+import com.ramsai.kitchen.repositories.OrderRepository;
 import com.ramsai.kitchen.repositories.ReviewRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -16,6 +19,7 @@ import org.springframework.web.client.RestTemplate;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -25,8 +29,10 @@ import java.util.stream.Collectors;
 public class ManagerAnalyticsService {
 
     private static final List<OrderStatus> NON_SALE_STATUSES = List.of(OrderStatus.DRAFT, OrderStatus.CANCELLED);
+    private static final int DAILY_WINDOW_DAYS = 30;
 
     private final OrderItemRepository orderItemRepository;
+    private final OrderRepository orderRepository;
     private final ReviewRepository reviewRepository;
     private final GeminiConfig geminiConfig;
     private final RestTemplate restTemplate;
@@ -75,7 +81,47 @@ public class ManagerAnalyticsService {
                 .limit(10)
                 .toList();
 
-        return new SalesReportResponse(totalUnits, totalRevenue, overallAvgRating, categories, topProducts);
+        long totalOrders = orderRepository.countByStatusNotIn(NON_SALE_STATUSES);
+        BigDecimal averageOrderValue = totalOrders > 0
+                ? totalRevenue.divide(BigDecimal.valueOf(totalOrders), 2, RoundingMode.HALF_UP)
+                : BigDecimal.ZERO;
+        List<DailySalesPoint> dailySales = buildDailySales();
+
+        return new SalesReportResponse(totalUnits, totalRevenue, overallAvgRating,
+                totalOrders, averageOrderValue, categories, topProducts, dailySales);
+    }
+
+    private List<DailySalesPoint> buildDailySales() {
+        LocalDate start = LocalDate.now().minusDays(DAILY_WINDOW_DAYS - 1L);
+        List<Order> orders = orderRepository.findAllByCreatedAtAfter(start.atStartOfDay());
+
+        Map<LocalDate, Long> unitsByDay = new HashMap<>();
+        Map<LocalDate, BigDecimal> revenueByDay = new HashMap<>();
+        Map<LocalDate, Long> ordersByDay = new HashMap<>();
+
+        for (Order o : orders) {
+            if (o.getCreatedAt() == null || NON_SALE_STATUSES.contains(o.getStatus())) continue;
+            LocalDate day = o.getCreatedAt().toLocalDate();
+            ordersByDay.merge(day, 1L, Long::sum);
+            if (o.getItems() == null) continue;
+            for (OrderItem item : o.getItems()) {
+                long qty = item.getQuantity() == null ? 0L : item.getQuantity();
+                BigDecimal price = item.getUnitPrice() == null ? BigDecimal.ZERO : item.getUnitPrice();
+                unitsByDay.merge(day, qty, Long::sum);
+                revenueByDay.merge(day, price.multiply(BigDecimal.valueOf(qty)), BigDecimal::add);
+            }
+        }
+
+        List<DailySalesPoint> series = new ArrayList<>();
+        for (int i = 0; i < DAILY_WINDOW_DAYS; i++) {
+            LocalDate day = start.plusDays(i);
+            series.add(new DailySalesPoint(
+                    day,
+                    unitsByDay.getOrDefault(day, 0L),
+                    revenueByDay.getOrDefault(day, BigDecimal.ZERO).setScale(2, RoundingMode.HALF_UP),
+                    ordersByDay.getOrDefault(day, 0L)));
+        }
+        return series;
     }
 
     @Transactional(readOnly = true)
@@ -93,8 +139,11 @@ public class ManagerAnalyticsService {
     private String buildContext(SalesReportResponse report) {
         StringBuilder sb = new StringBuilder();
         sb.append("RESTAURANT SALES REPORT (excludes live carts and cancelled orders).\n");
-        sb.append(String.format("Totals: %d units sold, $%s revenue, overall average rating %.1f/5.\n\n",
-                report.totalUnitsSold(), report.totalRevenue().toPlainString(), report.overallAverageRating()));
+        sb.append(String.format("All-time totals: %d units sold, $%s revenue across %d orders, " +
+                        "average order value $%s, overall average rating %.1f/5.\n\n",
+                report.totalUnitsSold(), report.totalRevenue().toPlainString(),
+                report.totalOrders(), report.averageOrderValue().toPlainString(),
+                report.overallAverageRating()));
 
         sb.append("Sales by category (sorted by units sold):\n");
         for (CategorySalesReport cat : report.categories()) {
@@ -104,6 +153,13 @@ public class ManagerAnalyticsService {
                 sb.append(String.format("    * %s: %d units, $%s, rating %.1f/5\n",
                         p.productName(), p.quantitySold(), p.revenue().toPlainString(), p.averageRating()));
             }
+        }
+
+        sb.append(String.format("\nDaily breakdown for the last %d days (date = units sold, revenue, orders):\n",
+                DAILY_WINDOW_DAYS));
+        for (DailySalesPoint d : report.dailySales()) {
+            sb.append(String.format("%s = %d units, $%s, %d orders\n",
+                    d.date(), d.units(), d.revenue().toPlainString(), d.orders()));
         }
         return sb.toString();
     }
@@ -120,11 +176,16 @@ public class ManagerAnalyticsService {
         systemInstruction.put("parts", Collections.singletonList(Collections.singletonMap("text",
                 "You are a restaurant Business-Intelligence analyst assisting the manager. " +
                 "Use the sales report data below to answer questions about product popularity, revenue, " +
-                "categories and review ratings. You may also reason about figures derivable from the data " +
-                "(best/worst performers, averages, comparisons, revenue share, etc.) even when not listed explicitly. " +
+                "categories, review ratings and day-by-day sales trends. The data includes a daily breakdown " +
+                "for the last " + DAILY_WINDOW_DAYS + " days, so you CAN build time-series charts such as revenue, " +
+                "units or orders per day. Use a 'line' chart for trends over time, and honour narrower windows " +
+                "(e.g. 'last 7/14/20 days') by plotting only the most recent matching days in order. " +
+                "You may also reason about figures derivable from the data (best/worst performers, averages, " +
+                "comparisons, revenue share, growth, busiest days, etc.) even when not listed explicitly. " +
                 "Keep written answers concise (a few sentences) and grounded in the numbers. " +
                 "When the manager asks you to draw, plot, show, visualize or generate a chart/graph, " +
-                "CALL the render_chart function with the requested chart type and the exact data to plot. " +
+                "ALWAYS CALL the render_chart function with the requested chart type and the exact data to plot " +
+                "(labels in chronological or ranked order, with matching numeric values). " +
                 "Pick sensible labels and numeric values straight from the data.\n\n" +
                 "DATA:\n" + context)));
         requestBody.put("system_instruction", systemInstruction);

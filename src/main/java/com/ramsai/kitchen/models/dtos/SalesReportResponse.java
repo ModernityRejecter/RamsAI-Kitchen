@@ -7,6 +7,9 @@ public record SalesReportResponse(
         long totalUnitsSold,
         BigDecimal totalRevenue,
         double overallAverageRating,
+        long totalOrders,
+        BigDecimal averageOrderValue,
         List<CategorySalesReport> categories,
-        List<SalesReportRow> topProducts
+        List<SalesReportRow> topProducts,
+        List<DailySalesPoint> dailySales
 ) {}

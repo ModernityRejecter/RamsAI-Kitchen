@@ -5,6 +5,7 @@ import com.ramsai.kitchen.models.dtos.AnalyticsAnswerResponse;
 import com.ramsai.kitchen.models.dtos.CategorySalesReport;
 import com.ramsai.kitchen.models.dtos.SalesReportResponse;
 import com.ramsai.kitchen.repositories.OrderItemRepository;
+import com.ramsai.kitchen.repositories.OrderRepository;
 import com.ramsai.kitchen.repositories.ReviewRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -26,6 +27,7 @@ import static org.mockito.Mockito.when;
 class ManagerAnalyticsServiceTest {
 
     @Mock private OrderItemRepository orderItemRepository;
+    @Mock private OrderRepository orderRepository;
     @Mock private ReviewRepository reviewRepository;
     @Mock private GeminiConfig geminiConfig;
     @Mock private RestTemplate restTemplate;
@@ -76,6 +78,10 @@ class ManagerAnalyticsServiceTest {
         // Average of rated products (4.5, 5.0) rounded to 1 decimal; the unrated one is excluded.
         assertEquals(4.8, report.overallAverageRating());
         assertEquals("Lasagna", report.topProducts().get(0).productName());
+
+        // Daily series is always a complete, zero-filled 30-day window for the trend charts.
+        assertEquals(30, report.dailySales().size());
+        assertEquals(0, report.totalOrders());
     }
 
     // ---- AI analyst (Gemini-backed) ----
