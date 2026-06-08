@@ -84,7 +84,7 @@ public class InventoryService {
         }
     }
 
-    private void recalculateAvailabilityForIngredient(Long ingredientId) {
+    public void recalculateAvailabilityForIngredient(Long ingredientId) {
         List<ProductIngredient> impactedRows = productIngredientRepository.findAllByIngredientId(ingredientId);
         Set<Long> impactedProductIds = impactedRows.stream()
                 .map(pi -> pi.getProduct().getId())

@@ -22,6 +22,7 @@ public class IngredientService {
     private final IngredientRepository ingredientRepository;
     private final ProductIngredientRepository productIngredientRepository;
     private final InventoryLogRepository inventoryLogRepository;
+    private final InventoryService inventoryService;
 
     @Transactional(readOnly = true)
     public List<IngredientResponse> getAll() {
@@ -77,7 +78,9 @@ public class IngredientService {
         ingredient.setUnit(request.unit().trim());
         ingredient.setCurrentStock(request.currentStock());
         ingredient.setMinimumStockThreshold(request.minimumStockThreshold());
-        return toResponse(ingredientRepository.save(ingredient));
+        Ingredient saved = ingredientRepository.save(ingredient);
+        inventoryService.recalculateAvailabilityForIngredient(id);
+        return toResponse(saved);
     }
 
     @Transactional
@@ -117,6 +120,7 @@ public class IngredientService {
                 .build();
         inventoryLogRepository.save(logEntry);
 
+        inventoryService.recalculateAvailabilityForIngredient(id);
         return toResponse(ingredient);
     }
 
