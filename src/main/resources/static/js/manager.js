@@ -1,5 +1,6 @@
 let managerProducts = [];
 let managerIngredients = [];
+let managerCategories = [];
 let currentUserRole = '';
 let currentFilter = 'ALL';
 let productToReject = null;
@@ -58,7 +59,8 @@ function setupConsoleUI() {
         const managerCards = [
             'createIngredientCard',
             'manageIngredientCard',
-            'userManagementCard'
+            'userManagementCard',
+            'manageCategoryCard'
         ];
         managerCards.forEach(id => {
             const node = document.getElementById(id);
@@ -88,6 +90,10 @@ function registerHandlers() {
         document.getElementById('createIngredientForm').addEventListener('submit', onCreateIngredient);
         const editIngForm = document.getElementById('editIngredientForm');
         if (editIngForm) editIngForm.addEventListener('submit', onEditIngredient);
+
+        document.getElementById('createCategoryForm').addEventListener('submit', onCreateCategory);
+        const editCatForm = document.getElementById('editCategoryForm');
+        if (editCatForm) editCatForm.addEventListener('submit', onEditCategory);
     }
 
     // Tab Filter Handlers
@@ -97,9 +103,120 @@ function registerHandlers() {
     document.getElementById('tab-rejected').addEventListener('click', () => setProductFilter('REJECTED'));
 }
 
-function setProductFilter(filter) {
+async function loadCategories() {
+    const result = await apiRequest('/api/v1/manager/categories');
+    if (!result.ok) return;
+    managerCategories = result.data || [];
+
+    // Update category dropdowns in product forms
+    const select = document.getElementById('productCategoryId');
+    const editSelect = document.getElementById('editProductCategoryId');
+    if (select) select.innerHTML = managerCategories.map(c => `<option value="${c.id}">${escapeHtml(c.name)}</option>`).join('');
+    if (editSelect) editSelect.innerHTML = managerCategories.map(c => `<option value="${c.id}">${escapeHtml(c.name)}</option>`).join('');
+
+    renderCategoryList();
+}
+
+function renderCategoryList() {
+    const tableBody = document.getElementById('manageCategoryTableBody');
+    if (!tableBody) return;
+
+    if (managerCategories.length === 0) {
+        tableBody.innerHTML = `<tr><td colspan="3" style="text-align:center; color:var(--text-gray); padding: 20px 0;">No categories found.</td></tr>`;
+        return;
+    }
+
+    tableBody.innerHTML = managerCategories.map(cat => `
+        <tr>
+            <td><strong>${escapeHtml(cat.name)}</strong></td>
+            <td>${escapeHtml(cat.description || '')}</td>
+            <td>
+                <button type="button" class="action-btn-sm edit-btn" onclick="openEditCategoryModal(${cat.id})">Edit</button>
+                <button type="button" class="action-btn-sm reject" onclick="deleteCategory(${cat.id})">Delete</button>
+            </td>
+        </tr>
+    `).join('');
+}
+
+async function onCreateCategory(e) {
+    e.preventDefault();
+    const form = e.target;
+    const payload = {
+        name: form.name.value.trim(),
+        description: form.description.value.trim() || null
+    };
+
+    const result = await apiRequest('/api/v1/manager/categories', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+    });
+    setStatus('categoryStatus', result.ok, result.message || 'Category creation finished.');
+    if (result.ok) {
+        form.reset();
+        await loadCategories();
+        await loadProducts();
+    }
+}
+
+async function deleteCategory(id) {
+    if (!confirm('Are you sure you want to delete this category?')) return;
+    const result = await apiRequest(`/api/v1/manager/categories/${id}`, { method: 'DELETE' });
+    if (result.ok) {
+        await loadCategories();
+        await loadProducts();
+    } else {
+        alert(result.message || 'Failed to delete category.');
+    }
+}
+
+function openEditCategoryModal(id) {
+    const cat = managerCategories.find(c => c.id === id);
+    if (!cat) return;
+
+    document.getElementById('editCategoryId').value = cat.id;
+    document.getElementById('editCategoryName').value = cat.name;
+    document.getElementById('editCategoryDescription').value = cat.description || '';
+
+    const modal = document.getElementById('editCategoryModal');
+    if (modal) modal.style.display = 'flex';
+}
+
+function closeEditCategoryModal() {
+    const modal = document.getElementById('editCategoryModal');
+    if (modal) modal.style.display = 'none';
+    const form = document.getElementById('editCategoryForm');
+    if (form) form.reset();
+}
+
+async function onEditCategory(e) {
+    e.preventDefault();
+    const form = e.target;
+    const id = Number(form.id.value);
+    const payload = {
+        name: form.name.value.trim(),
+        description: form.description.value.trim() || null
+    };
+
+    const result = await apiRequest(`/api/v1/manager/categories/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+    });
+
+    if (result.ok) {
+        closeEditCategoryModal();
+        await loadCategories();
+        await loadProducts();
+    } else {
+        alert('Failed to update category: ' + result.message);
+    }
+}
+
+// ... rest of the functions (onCreateProduct, onCreateIngredient, onAddBomRow, loadProducts, renderProductList, etc.)
+// Re-adding existing functions to maintain integrity
+async function setProductFilter(filter) {
     currentFilter = filter;
-    // Toggle active class on tabs
     const tabs = ['all', 'pending', 'approved', 'rejected'];
     tabs.forEach(t => {
         const btn = document.getElementById(`tab-${t}`);
@@ -182,30 +299,6 @@ async function onAddBomRow(e) {
     }
 }
 
-async function loadCategories() {
-    const result = await apiRequest('/api/v1/products/categories');
-    const select = document.getElementById('productCategoryId');
-    const editSelect = document.getElementById('editProductCategoryId');
-    if (select) select.innerHTML = '';
-    if (editSelect) editSelect.innerHTML = '';
-    if (!result.ok) return;
-
-    result.data.forEach(category => {
-        if (select) {
-            const option = document.createElement('option');
-            option.value = category.id;
-            option.textContent = category.name;
-            select.appendChild(option);
-        }
-        if (editSelect) {
-            const option = document.createElement('option');
-            option.value = category.id;
-            option.textContent = category.name;
-            editSelect.appendChild(option);
-        }
-    });
-}
-
 async function loadProducts() {
     const result = await apiRequest('/api/v1/products/manage');
     if (!result.ok) return;
@@ -230,7 +323,6 @@ function renderProductList() {
     const tableBody = document.getElementById('productManagementTableBody');
     if (!tableBody) return;
 
-    // Filter products
     let filtered = managerProducts;
     if (currentUserRole === 'CHEF') {
         if (currentFilter === 'ALL') {
@@ -281,7 +373,6 @@ function renderProductList() {
             }
         }
 
-        // Add Edit and Delete buttons for both Manager and Chef
         actions += `
             <button type="button" class="action-btn-sm edit-btn" onclick="openEditModal(${product.id})">
                 <i class="fas fa-edit"></i> Edit
@@ -291,7 +382,6 @@ function renderProductList() {
             </button>
         `;
 
-        // If there is rejection feedback, show the "Feedback" button
         if (product.approvalStatus === 'REJECTED' && product.rejectionFeedback) {
             actions += `
                 <button type="button" class="action-btn-sm feedback-btn" onclick="toggleFeedback(${product.id})">
@@ -418,9 +508,6 @@ async function loadIngredients() {
 
     const bomIngredient = document.getElementById('bomIngredientId');
     if (bomIngredient) bomIngredient.innerHTML = ingredientOptions;
-
-    const stockIngredient = document.getElementById('stockIngredientId');
-    if (stockIngredient) stockIngredient.innerHTML = ingredientOptions;
 
     renderIngredientList();
 }
@@ -687,7 +774,6 @@ function renderUserList() {
             return;
         }
 
-        // Sort users: managers first, then chefs, then waiters, then customers
         const roleOrder = { MANAGER: 1, CHEF: 2, WAITER: 3, CUSTOMER: 4 };
         managerUsers.sort((a, b) => {
             const roleA = a.role || '';
@@ -742,7 +828,6 @@ async function updateUserRole(userId) {
     if (!user) return;
 
     if (!confirm(`Are you sure you want to change user "${user.username}"'s role to ${newRole}?`)) {
-        // Reset selection to current role
         select.value = user.role;
         return;
     }

@@ -731,6 +731,32 @@
     </section>
 
     <div class="manager-grid">
+        <!-- 4. Create Category (NEW) -->
+        <div class="manager-card">
+            <h3><i class="fas fa-tags"></i> Create Category</h3>
+            <p>Define new menu categories.</p>
+            <form id="createCategoryForm" class="manager-form">
+                <input name="name" placeholder="Category name" required>
+                <textarea name="description" placeholder="Description..."></textarea>
+                <button type="submit">Create Category</button>
+                <div class="status-box" id="categoryStatus"></div>
+            </form>
+        </div>
+
+        <!-- Manage Categories Card (NEW) -->
+        <div class="manager-card wide-card" id="manageCategoryCard">
+            <h3><i class="fas fa-tags"></i> Manage Categories</h3>
+            <p>Edit or delete existing menu categories.</p>
+            <div class="table-wrap" style="max-height:300px;">
+                <table>
+                    <thead>
+                        <tr><th>Name</th><th>Description</th><th>Actions</th></tr>
+                    </thead>
+                    <tbody id="manageCategoryTableBody"></tbody>
+                </table>
+            </div>
+        </div>
+
         <!-- 1. Create Product -->
         <div class="manager-card">
             <h3><i class="fas fa-box-open"></i> <span id="createProductHeader">Create Product</span></h3>
@@ -964,6 +990,33 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="action-btn-sm feedback-btn" onclick="closeEditIngredientModal()" style="padding:8px 16px;">Cancel</button>
+                    <button type="submit" class="action-btn-sm edit-btn" style="padding:8px 16px;">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Edit Category Modal -->
+    <div id="editCategoryModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Edit Category</h3>
+                <button type="button" class="modal-close" onclick="closeEditCategoryModal()">&times;</button>
+            </div>
+            <form id="editCategoryForm" class="manager-form">
+                <input type="hidden" id="editCategoryId" name="id">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label>Category Name</label>
+                        <input id="editCategoryName" name="name" placeholder="Name" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Description</label>
+                        <textarea id="editCategoryDescription" name="description" placeholder="Description..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="action-btn-sm feedback-btn" onclick="closeEditCategoryModal()" style="padding:8px 16px;">Cancel</button>
                     <button type="submit" class="action-btn-sm edit-btn" style="padding:8px 16px;">Save Changes</button>
                 </div>
             </form>
