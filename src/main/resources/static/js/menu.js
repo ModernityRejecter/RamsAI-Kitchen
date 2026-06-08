@@ -1,7 +1,6 @@
 document.addEventListener('DOMContentLoaded', () => {
     loadCategories();
     loadDailySpecials();
-    loadRecommended();
     loadProducts();
     loadCart();
     loadTables();
@@ -227,10 +226,6 @@ async function loadTables() {
 
 async function loadDailySpecials() {
     await fetchAndRender('/api/v1/products/daily', 'daily-grid');
-}
-
-async function loadRecommended() {
-    await fetchAndRender('/api/v1/products/recommended', 'recommended-grid');
 }
 
 async function fetchAndRender(url, targetId) {
