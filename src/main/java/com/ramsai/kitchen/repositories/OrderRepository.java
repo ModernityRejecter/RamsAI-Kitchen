@@ -53,6 +53,8 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
            "WHERE o.customerId = :customerId AND i.product.id = :productId AND o.status = :status")
     boolean hasCustomerOrderedProduct(@Param("customerId") Long customerId, @Param("productId") Long productId, @Param("status") OrderStatus status);
 
+    @Query("SELECT COUNT(o) FROM Order o WHERE o.customerId = :customerId AND o.status NOT IN ('COMPLETED', 'CANCELLED', 'SERVED')")
+    long countActiveOrdersByCustomerId(@Param("customerId") Long customerId);
     @Query("SELECT DISTINCT o FROM Order o LEFT JOIN FETCH o.items i LEFT JOIN FETCH i.product WHERE o.createdAt >= :startDate")
     List<Order> findAllByCreatedAtAfter(@Param("startDate") java.time.LocalDateTime startDate);
 }

@@ -23,7 +23,7 @@ function checkAuth() {
         if (userRole === 'CHEF' || userRole === 'MANAGER') {
             initKitchenNotifications();
         }
-        if (userRole === 'CUSTOMER' || userRole === 'WAITER' || userRole === 'MANAGER') {
+        if (userRole === 'CUSTOMER' || userRole === 'GUEST' || userRole === 'WAITER' || userRole === 'MANAGER') {
             initOrderNotifications();
         }
     }
@@ -140,14 +140,22 @@ function updateUIForAuthenticatedUser(username, role) {
             ${role === 'MANAGER' ? '<li><a href="audit.html">Audit Logs</a></li>' : ''}
             ${role === 'CHEF' || role === 'MANAGER' ? `<li><a href="manager.html">${role === 'MANAGER' ? 'Manager' : 'Console'}</a></li>` : ''}
             ${role === 'CHEF' || role === 'MANAGER' ? '<li><a href="kitchen.html" id="navKitchen">Kitchen</a></li>' : ''}
-            ${role === 'CUSTOMER' || role === 'WAITER' || role === 'MANAGER' ? '<li><a href="tables.html">Tables</a></li>' : ''}
-            ${role === 'CUSTOMER' || role === 'WAITER' || role === 'MANAGER' ? '<li><a href="my-orders.html" id="navMyOrders">My Orders</a></li>' : ''}
+            ${role === 'CUSTOMER' || role === 'GUEST' || role === 'WAITER' || role === 'MANAGER' ? '<li><a href="tables.html">Tables</a></li>' : ''}
+            ${role === 'CUSTOMER' || role === 'GUEST' || role === 'WAITER' || role === 'MANAGER' ? '<li><a href="my-orders.html" id="navMyOrders">My Orders</a></li>' : ''}
             <li><a href="#" id="logoutBtn">Logout (${username})</a></li>
             <li><a href="order.html" id="cartLink"><i class="fas fa-shopping-cart"></i> <span id="cartCount">0</span></a></li>
         `;
 
         document.getElementById('logoutBtn').addEventListener('click', (e) => {
             e.preventDefault();
+            const storage = getStorage();
+            const role = storage.getItem('role');
+            
+            if (role === 'GUEST') {
+                const confirmed = confirm("Warning: You are logged in as a Guest. If you logout, you will lose access to this session and your order tracking. Do you want to proceed?");
+                if (!confirmed) return;
+            }
+
             localStorage.clear();
             sessionStorage.clear();
             window.location.href = 'index.html';
