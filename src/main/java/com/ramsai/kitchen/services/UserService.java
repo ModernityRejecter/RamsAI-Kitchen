@@ -10,7 +10,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
+import com.ramsai.kitchen.models.dtos.UserResponse;
 
 @Service
 @RequiredArgsConstructor
@@ -140,5 +143,50 @@ public class UserService {
         user.setProfilePictureUrl(url);
         userRepository.save(user);
         auditLogService.logAction(user, "PROFILE_PICTURE_UPDATE", "SUCCESS", "Profile picture updated");
+    }
+
+    public List<UserResponse> getAllUsers() {
+        return userRepository.findAll().stream()
+                .filter(user -> user.getRole() != User.UserRole.GUEST)
+                .map(user -> new UserResponse(
+                        user.getId(),
+                        user.getUsername(),
+                        user.getEmail(),
+                        user.getRole().name(),
+                        user.isActive()
+                ))
+                .collect(Collectors.toList());
+    }
+
+    @Transactional
+    public void updateUserRole(Long userId, String newRoleStr, User caller) {
+        User targetUser = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        if (targetUser.getRole() == User.UserRole.GUEST) {
+            throw new RuntimeException("Cannot modify guest roles");
+        }
+
+        if (caller.getId().equals(targetUser.getId())) {
+            throw new RuntimeException("You cannot modify your own role");
+        }
+
+        User.UserRole newRole;
+        try {
+            newRole = User.UserRole.valueOf(newRoleStr.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            throw new RuntimeException("Invalid user role");
+        }
+
+        if (newRole == User.UserRole.GUEST) {
+            throw new RuntimeException("Cannot assign guest role to users");
+        }
+
+        User.UserRole oldRole = targetUser.getRole();
+        targetUser.setRole(newRole);
+        userRepository.save(targetUser);
+
+        auditLogService.logAction(caller, "USER_ROLE_UPDATE", "SUCCESS",
+                String.format("Updated user %s role from %s to %s", targetUser.getUsername(), oldRole, newRole));
     }
 }
