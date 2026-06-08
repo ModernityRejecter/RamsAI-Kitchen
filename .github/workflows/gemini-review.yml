@@ -52,6 +52,10 @@ jobs:
           REPOSITORY: '${{ github.repository }}'
           ADDITIONAL_CONTEXT: '${{ inputs.additional_context }}'
           GEMINI_API_KEY: '${{ secrets.GEMINI_API_KEY }}'
+          # gemini-dispatch only routes non-fork PRs / collaborator comments here, so the
+          # checked-out code is trusted. Required since gemini-cli >=0.39 stopped auto-trusting
+          # CI workspaces, which was hanging the code-review extension install on a trust prompt.
+          GEMINI_TRUST_WORKSPACE: 'true'
         with:
           gcp_location: '${{ vars.GOOGLE_CLOUD_LOCATION }}'
           gcp_project_id: '${{ vars.GOOGLE_CLOUD_PROJECT }}'
