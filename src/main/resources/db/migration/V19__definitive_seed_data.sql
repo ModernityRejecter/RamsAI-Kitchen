@@ -57,7 +57,7 @@ INSERT INTO restaurant_tables (table_number, status, x_pos, y_pos) VALUES
 
 -- Occupy some tables
 UPDATE restaurant_tables SET status = 'OCCUPIED' WHERE table_number IN (2, 5, 13, 16, 21, 28);
-UPDATE restaurant_tables SET status = 'BILL_REQUESTED' WHERE table_number IN (8, 20, 26, 30);
+UPDATE restaurant_tables SET status = 'OCCUPIED' WHERE table_number IN (8, 20, 26, 30);
 
 -- 4. REVIEWS (Balanced: Most products highly rated, ONLY Double Bacon Burger is negative)
 DO $$
