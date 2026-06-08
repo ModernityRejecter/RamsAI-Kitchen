@@ -10,5 +10,6 @@ public interface OrderMapper {
 
     @Mapping(target = "tableId", source = "table.id")
     @Mapping(target = "tableNumber", source = "table.tableNumber")
+    @Mapping(target = "notes", source = "notes")
     OrderResponse toResponse(Order order);
 }

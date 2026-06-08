@@ -187,6 +187,7 @@ function renderCurrentOrderCard(order) {
     const items = Array.isArray(order.items) ? order.items : [];
     const total = formatMoney(order.totalPrice);
     const placed = formatDateTime(order.placedAt || order.createdAt);
+    const orderNotes = order.notes ? `<div class="item-notes" style="margin-bottom: 15px; background: #fff8e1; padding: 10px; border-radius: 8px; border-left: 3px solid #ffc107;"><i class="fas fa-exclamation-triangle"></i> <strong>Note:</strong> ${escapeHtml(order.notes)}</div>` : '';
 
     return `
         <article class="order-card order-card-current">
@@ -198,6 +199,7 @@ function renderCurrentOrderCard(order) {
                 ${renderStatusBadge(orderStatus, 'order')}
             </div>
 
+            ${orderNotes}
             ${renderOrderProgress(orderStatus)}
 
             <div class="order-items">

@@ -60,7 +60,7 @@ class CartServiceTest {
         when(orderRepository.findByCustomerIdAndStatus(customerId, OrderStatus.DRAFT)).thenReturn(Optional.of(order));
         when(tableRepository.findById(tableId)).thenReturn(Optional.of(table));
 
-        cartService.checkout(customerId, tableId);
+        cartService.checkout(customerId, tableId, "No peanuts");
 
         verify(inventoryService).validateAndDeductForOrder(order);
         verify(orderRepository).save(order);
@@ -82,7 +82,7 @@ class CartServiceTest {
         when(tableRepository.findById(tableId)).thenReturn(Optional.of(table));
         doThrow(new RuntimeException("Insufficient stock")).when(inventoryService).validateAndDeductForOrder(order);
 
-        assertThrows(RuntimeException.class, () -> cartService.checkout(customerId, tableId));
+        assertThrows(RuntimeException.class, () -> cartService.checkout(customerId, tableId, null));
         verify(orderRepository, never()).save(order);
     }
 }

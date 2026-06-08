@@ -47,6 +47,9 @@ public class Order {
     @Column(name = "placed_at")
     private LocalDateTime placedAt;
 
+    @Column(name = "notes")
+    private String notes;
+
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<OrderItem> items;
 

@@ -139,7 +139,12 @@ function setupOrderUI() {
             // but we can extend the cart items with notes if needed.
             
             try {
-                const response = await fetch(`/api/v1/cart/checkout?tableId=${tableId}`, {
+                let url = `/api/v1/cart/checkout?tableId=${tableId}`;
+                if (notes) {
+                    url += `&notes=${encodeURIComponent(notes)}`;
+                }
+
+                const response = await fetch(url, {
                     method: 'POST',
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
