@@ -43,46 +43,6 @@
             box-shadow: var(--shadow);
             position: relative;
         }
-        .avatar-container {
-            width: 100px;
-            height: 100px;
-            background: var(--primary-color);
-            color: white;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 2.5rem;
-            font-weight: 800;
-            margin: 0 auto 20px;
-            box-shadow: 0 10px 20px rgba(243, 156, 18, 0.2);
-            overflow: hidden;
-            position: relative;
-            cursor: pointer;
-        }
-        .avatar-container img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-        .avatar-overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.5);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-size: 0.8rem;
-            opacity: 0;
-            transition: opacity 0.3s;
-        }
-        .avatar-container:hover .avatar-overlay {
-            opacity: 1;
-        }
         .user-card h3 {
             color: var(--secondary-color);
             font-size: 1.5rem;
@@ -250,13 +210,6 @@
         <!-- Sidebar -->
         <aside class="profile-sidebar">
             <div class="user-card">
-                <input type="file" id="profilePicInput" style="display: none;" accept="image/*">
-                <div class="avatar-container" id="avatarContainer" title="Click to change profile picture">
-                    <div id="avatarDisplay" style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;">?</div>
-                    <div class="avatar-overlay">
-                        <i class="fas fa-camera"></i>
-                    </div>
-                </div>
                 <h3 id="sideUsername">---</h3>
                 <span class="role-label" id="sideRole">---</span>
                 
@@ -364,13 +317,6 @@
                     document.getElementById('productManagementLink').style.display = 'block';
                 }
                 
-                const avatarDisplay = document.getElementById('avatarDisplay');
-                if (user.profilePictureUrl) {
-                    avatarDisplay.innerHTML = `<img src="${user.profilePictureUrl}" alt="Profile">`;
-                } else {
-                    avatarDisplay.textContent = user.username.charAt(0).toUpperCase();
-                }
-                
                 // Account Details
                 document.getElementById('dispUsername').textContent = user.username;
                 document.getElementById('dispEmail').textContent = user.email;
@@ -444,38 +390,6 @@
                     sessionStorage.clear();
                     window.location.href = 'index.html';
                 }
-            }
-        });
-
-        // Profile Picture Upload Logic
-        const avatarContainer = document.getElementById('avatarContainer');
-        const fileInput = document.getElementById('profilePicInput');
-
-        avatarContainer.addEventListener('click', () => fileInput.click());
-
-        fileInput.addEventListener('change', async (e) => {
-            const file = e.target.files[0];
-            if (!file) return;
-
-            const formData = new FormData();
-            formData.append('file', file);
-
-            try {
-                const response = await authenticatedFetch('/api/v1/user/profile-picture', {
-                    method: 'POST',
-                    body: formData
-                });
-
-                if (response.ok) {
-                    const result = await response.json();
-                    alert('Profile picture updated!');
-                    loadProfile(); // Refresh UI
-                } else {
-                    alert('Failed to upload image.');
-                }
-            } catch (error) {
-                console.error('Error uploading profile picture:', error);
-                alert('An error occurred during upload.');
             }
         });
 
