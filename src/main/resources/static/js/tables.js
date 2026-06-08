@@ -129,8 +129,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const walls = wallsRes.ok ? (await wallsRes.json()).data : [];
 
             elements = [
-                ...tables.map(t => ({...t, elementType: 'table'})),
-                ...walls.map(w => ({...w, elementType: 'wall'}))
+                ...tables.map(t => ({...t, elementType: 'table', xPos: t.xpos ?? t.xPos, yPos: t.ypos ?? t.yPos})),
+                ...walls.map(w => ({...w, elementType: 'wall', xPos: w.xpos ?? w.xPos, yPos: w.ypos ?? w.yPos}))
             ];
             processGroups();
             computeWallEdges();
