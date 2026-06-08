@@ -278,9 +278,18 @@ public class TableService {
     }
 
     private TableResponse mapToTableResponse(RestaurantTable table) {
-        List<Order> orders = orderRepository.findAllByTableIdOrderByPlacedAtDesc(table.getId());
-        LocalDateTime lastOrderTime = orders.isEmpty() ? null
-                : (orders.get(0).getPlacedAt() != null ? orders.get(0).getPlacedAt() : orders.get(0).getCreatedAt());
+        List<Order> orders = orderRepository.findAllByTableNumberOrderByPlacedAtDesc(table.getTableNumber());
+        
+        LocalDateTime lastOrderTime = null;
+        if (table.getStatus() == com.ramsai.kitchen.enums.TableStatus.OCCUPIED && table.getOccupiedAt() != null) {
+            for (Order order : orders) {
+                LocalDateTime placed = order.effectivePlacedAt();
+                if (placed.isAfter(table.getOccupiedAt())) {
+                    lastOrderTime = placed;
+                    break;
+                }
+            }
+        }
 
         return new TableResponse(
                 table.getId(),

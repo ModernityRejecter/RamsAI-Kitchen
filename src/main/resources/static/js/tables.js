@@ -76,6 +76,23 @@ document.addEventListener('DOMContentLoaded', () => {
         toast._timer = setTimeout(() => { toast.className = 'status-toast'; }, 3000);
     }
 
+    function formatTimeElapsed(isoString) {
+        if (!isoString) return '';
+        const past = new Date(isoString);
+        const now = new Date();
+        const diffMs = now - past;
+        const diffMins = Math.floor(diffMs / 60000);
+        
+        if (diffMins < 1) return 'Just now';
+        if (diffMins < 60) return `${diffMins}m ago`;
+        
+        const hours = Math.floor(diffMins / 60);
+        const mins = diffMins % 60;
+        if (hours < 24) return `${hours}h ${mins}m ago`;
+        
+        return past.toLocaleDateString();
+    }
+
     function initGrid() {
         floorPlan.innerHTML = '';
         floorPlan.style.gridTemplateColumns = `repeat(${gridCols}, ${CELL_SIZE}px)`;
@@ -135,7 +152,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     capacity: 0,
                     status: t.status,
                     id: t.id,
-                    occupiedByUserId: t.occupiedByUserId
+                    occupiedByUserId: t.occupiedByUserId,
+                    lastOrderTime: t.lastOrderTime
                 };
             }
             tableGroups[t.tableNumber].squares.push(t);
@@ -288,9 +306,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const statusLabel = isSelfOccupied ? 'YOURS' : group.status;
             const statusClass = isSelfOccupied ? 'SELF' : group.status;
+            const timeElapsed = group.status === 'OCCUPIED' && group.lastOrderTime ? 
+                `<span class="time-elapsed">${formatTimeElapsed(group.lastOrderTime)}</span>` : '';
 
             item.innerHTML = `
                 <span>Table ${tableNum} (${group.capacity} seats)</span>
+                ${timeElapsed}
                 <span class="status-badge ${statusClass}">${statusLabel}</span>
             `;
             item.onclick = () => selectGroup(tableNum);
@@ -326,6 +347,15 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('detailTableNumber').textContent = selectedGroupNumber;
         document.getElementById('detailStatus').textContent = isSelfOccupied ? 'Occupied by you' : group.status;
         document.getElementById('detailCapacity').textContent = group.capacity;
+
+        const lastOrderRow = document.getElementById('lastOrderRow');
+        const detailLastOrder = document.getElementById('detailLastOrder');
+        if (group.status === 'OCCUPIED') {
+            lastOrderRow.style.display = 'flex';
+            detailLastOrder.textContent = group.lastOrderTime ? formatTimeElapsed(group.lastOrderTime) : 'No orders yet';
+        } else {
+            lastOrderRow.style.display = 'none';
+        }
 
         const occupyBtn = document.getElementById('occupyTableBtn');
         const freeBtn = document.getElementById('freeTableBtn');
@@ -639,6 +669,22 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         } catch (e) { /* ignore */ }
     }
+
+    // Periodic refresh for time labels
+    setInterval(() => {
+        if (Object.keys(tableGroups).length > 0) {
+            populateSidePanelList();
+            if (selectedGroupNumber) {
+                const group = tableGroups[selectedGroupNumber];
+                if (group && group.status === 'OCCUPIED') {
+                    const detailLastOrder = document.getElementById('detailLastOrder');
+                    if (detailLastOrder) {
+                        detailLastOrder.textContent = group.lastOrderTime ? formatTimeElapsed(group.lastOrderTime) : 'No orders yet';
+                    }
+                }
+            }
+        }
+    }, 30000);
 
     (async () => {
         initGrid();

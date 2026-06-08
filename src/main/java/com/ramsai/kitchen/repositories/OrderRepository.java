@@ -18,6 +18,12 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
     )
     List<Order> findAllByTableIdOrderByPlacedAtDesc(Long tableId);
 
+    @org.springframework.data.jpa.repository.Query(
+        "SELECT o FROM Order o WHERE o.table.tableNumber = :tableNumber " +
+        "ORDER BY COALESCE(o.placedAt, o.createdAt) DESC"
+    )
+    List<Order> findAllByTableNumberOrderByPlacedAtDesc(@Param("tableNumber") Integer tableNumber);
+
     @org.springframework.data.jpa.repository.Query("SELECT DISTINCT o FROM Order o LEFT JOIN FETCH o.items WHERE o.customerId = :customerId AND o.status = :status")
     Optional<Order> findByCustomerIdAndStatus(Long customerId, OrderStatus status);
 
