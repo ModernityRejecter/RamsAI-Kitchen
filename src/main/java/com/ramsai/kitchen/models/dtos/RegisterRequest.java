@@ -22,8 +22,5 @@ public record RegisterRequest(
 
     @NotBlank(message = "Email is required")
     @Email(message = "Invalid email format")
-    String email,
-
-    @NotNull(message = "Role is required")
-    User.UserRole role
+    String email
 ) {}

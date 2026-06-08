@@ -33,6 +33,9 @@ async function bootstrapManagerPage() {
         loadLowStock(),
         loadIngredients()
     ];
+    if (currentUserRole === 'MANAGER') {
+        promises.push(loadUsers());
+    }
     await Promise.all(promises);
     setupConsoleUI();
 }
@@ -54,7 +57,8 @@ function setupConsoleUI() {
         // Hide Manager-only cards
         const managerCards = [
             'createIngredientCard',
-            'manageIngredientCard'
+            'manageIngredientCard',
+            'userManagementCard'
         ];
         managerCards.forEach(id => {
             const node = document.getElementById(id);
@@ -655,4 +659,104 @@ function escapeHtml(value) {
         .replace(/>/g, '&gt;')
         .replace(/"/g, '&quot;')
         .replace(/'/g, '&#39;');
+}
+
+let managerUsers = [];
+
+async function loadUsers() {
+    const result = await apiRequest('/api/v1/manager/users');
+    if (!result.ok) {
+        console.error('Failed to load users:', result.message);
+        const tableBody = document.getElementById('userManagementTableBody');
+        if (tableBody) {
+            tableBody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:#991b1b; padding: 20px 0; background-color: #fef2f2; border: 1px solid #f87171; border-radius: 8px;">Failed to load users: ${escapeHtml(result.message)}</td></tr>`;
+        }
+        return;
+    }
+    managerUsers = result.data || [];
+    renderUserList();
+}
+
+function renderUserList() {
+    const tableBody = document.getElementById('userManagementTableBody');
+    if (!tableBody) return;
+
+    try {
+        if (managerUsers.length === 0) {
+            tableBody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:var(--text-gray); padding: 20px 0;">No users found.</td></tr>`;
+            return;
+        }
+
+        // Sort users: managers first, then chefs, then waiters, then customers
+        const roleOrder = { MANAGER: 1, CHEF: 2, WAITER: 3, CUSTOMER: 4 };
+        managerUsers.sort((a, b) => {
+            const roleA = a.role || '';
+            const roleB = b.role || '';
+            return (roleOrder[roleA] || 99) - (roleOrder[roleB] || 99);
+        });
+
+        const currentUsername = localStorage.getItem('username') || sessionStorage.getItem('username');
+
+        tableBody.innerHTML = managerUsers.map(user => {
+            const isSelf = user.username === currentUsername;
+            const userRole = user.role || 'CUSTOMER';
+            const roleLower = userRole.toLowerCase();
+            
+            let selectHtml = '';
+            if (isSelf) {
+                selectHtml = `<span style="color: var(--text-gray); font-style: italic;">Cannot change own role</span>`;
+            } else {
+                selectHtml = `
+                    <div style="display:flex; gap:8px; align-items:center;">
+                        <select id="role-select-${user.id}" style="padding: 6px 10px; border-radius: 8px; border: 1px solid var(--border-color); font-size: 0.85rem;">
+                            <option value="CUSTOMER" ${userRole === 'CUSTOMER' ? 'selected' : ''}>Customer</option>
+                            <option value="WAITER" ${userRole === 'WAITER' ? 'selected' : ''}>Waiter</option>
+                            <option value="CHEF" ${userRole === 'CHEF' ? 'selected' : ''}>Chef</option>
+                            <option value="MANAGER" ${userRole === 'MANAGER' ? 'selected' : ''}>Manager</option>
+                        </select>
+                        <button class="action-btn-sm edit-btn" onclick="updateUserRole(${user.id})">Update</button>
+                    </div>
+                `;
+            }
+
+            return `
+                <tr>
+                    <td><strong>${escapeHtml(user.username)}</strong> ${isSelf ? '<span style="color:var(--text-gray); font-size:0.75rem;">(You)</span>' : ''}</td>
+                    <td>${escapeHtml(user.email)}</td>
+                    <td><span class="role-badge ${roleLower}">${escapeHtml(userRole)}</span></td>
+                    <td>${selectHtml}</td>
+                </tr>
+            `;
+        }).join('');
+    } catch (err) {
+        console.error('Error rendering user list:', err);
+        tableBody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:#991b1b; padding: 20px 0; background-color: #fef2f2; border: 1px solid #f87171; border-radius: 8px;">Error displaying users: ${escapeHtml(err.message)}</td></tr>`;
+    }
+}
+
+async function updateUserRole(userId) {
+    const select = document.getElementById(`role-select-${userId}`);
+    if (!select) return;
+    const newRole = select.value;
+    const user = managerUsers.find(u => u.id === userId);
+    if (!user) return;
+
+    if (!confirm(`Are you sure you want to change user "${user.username}"'s role to ${newRole}?`)) {
+        // Reset selection to current role
+        select.value = user.role;
+        return;
+    }
+
+    const result = await apiRequest(`/api/v1/manager/users/${userId}/role`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ role: newRole })
+    });
+
+    setStatus('userRoleStatus', result.ok, result.message || 'User role update finished.');
+    if (result.ok) {
+        await loadUsers();
+    } else {
+        select.value = user.role;
+    }
 }

@@ -40,7 +40,7 @@ public class AuthService {
                 .username(request.username())
                 .passwordHash(passwordEncoder.encode(request.password()))
                 .email(request.email())
-                .role(request.role())
+                .role(User.UserRole.CUSTOMER)
                 .isActive(true)
                 .isEmailVerified(false)
                 .createdAt(LocalDateTime.now())

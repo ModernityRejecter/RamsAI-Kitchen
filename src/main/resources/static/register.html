@@ -114,15 +114,6 @@
                     <input type="password" id="password" name="password" required>
                     <div id="passwordError" class="field-error"></div>
                 </div>
-                <div class="form-group">
-                    <label for="role">Role</label>
-                    <select id="role" name="role" required>
-                        <option value="CUSTOMER">Customer</option>
-                        <option value="WAITER">Waiter</option>
-                        <option value="CHEF">Chef</option>
-                        <option value="MANAGER">Manager</option>
-                    </select>
-                </div>
                 <button type="submit" class="auth-button">Register</button>
                 <div id="errorMessage" class="error-message"></div>
             </form>
@@ -142,14 +133,13 @@
             const username = e.target.username.value;
             const email = e.target.email.value;
             const password = e.target.password.value;
-            const role = e.target.role.value;
             const errorDiv = document.getElementById('errorMessage');
 
             try {
                 const response = await fetch('/api/v1/auth/register', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ username, email, password, role })
+                    body: JSON.stringify({ username, email, password })
                 });
 
                 const result = await response.json();
