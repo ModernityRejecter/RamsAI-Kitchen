@@ -81,9 +81,14 @@ public class ProductService {
         Category category = categoryRepository.findById(request.categoryId())
                 .orElseThrow(() -> new ResourceNotFoundException("Category not found with id: " + request.categoryId()));
 
-        // Always set to PENDING for new products (especially those created via AI/Chef)
-        // unless a different policy is requested. The user specifically asked for PENDING.
         Product.ApprovalStatus status = Product.ApprovalStatus.PENDING;
+        boolean isActive = false;
+
+        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        if (principal instanceof User currentUser && currentUser.getRole() == User.UserRole.MANAGER) {
+            status = Product.ApprovalStatus.APPROVED;
+            isActive = true;
+        }
 
         Product product = Product.builder()
                 .name(request.name().trim())
@@ -94,7 +99,7 @@ public class ProductService {
                 .isDailyRecipe(Boolean.TRUE.equals(request.isDailyRecipe()))
                 .discountPrice(request.discountPrice())
                 .approvalStatus(status)
-                .isActive(false) // Inactive until approved
+                .isActive(isActive)
                 .build();
 
         Product saved = productRepository.save(product);

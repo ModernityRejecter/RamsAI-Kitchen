@@ -1,6 +1,7 @@
 package com.ramsai.kitchen.services;
 
 import com.ramsai.kitchen.mappers.ProductMapper;
+import com.ramsai.kitchen.models.dtos.ProductCreateRequest;
 import com.ramsai.kitchen.models.dtos.ProductResponse;
 import com.ramsai.kitchen.models.dtos.ProductUpdateRequest;
 import com.ramsai.kitchen.models.entities.Product;
@@ -193,6 +194,53 @@ class ProductServiceTest {
             assertFalse(product.isActive());
             assertNull(product.getRejectionFeedback());
             verify(productRepository).save(product);
+        }
+    }
+
+    @Test
+    void createProduct_Manager_Success() {
+        com.ramsai.kitchen.models.entities.Category category = new com.ramsai.kitchen.models.entities.Category();
+        category.setId(1L);
+        category.setName("Category");
+
+        ProductCreateRequest request = new ProductCreateRequest(
+                "New Product",
+                "Description",
+                BigDecimal.valueOf(10.0),
+                1L,
+                false,
+                false,
+                null
+        );
+
+        User manager = new User();
+        manager.setRole(User.UserRole.MANAGER);
+
+        Authentication authentication = mock(Authentication.class);
+        when(authentication.getPrincipal()).thenReturn(manager);
+
+        SecurityContext securityContext = mock(SecurityContext.class);
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+
+        try (MockedStatic<SecurityContextHolder> securityContextHolderMockedStatic = mockStatic(SecurityContextHolder.class)) {
+            securityContextHolderMockedStatic.when(SecurityContextHolder::getContext).thenReturn(securityContext);
+
+            when(categoryRepository.findById(1L)).thenReturn(Optional.of(category));
+            when(productRepository.save(any(Product.class))).thenAnswer(invocation -> {
+                Product p = invocation.getArgument(0);
+                p.setId(1L);
+                return p;
+            });
+            when(productMapper.toResponse(any(Product.class))).thenReturn(new ProductResponse(
+                    1L, "New Product", "Description", BigDecimal.valueOf(10.0), false, false, null, 0.0, "Category", 1L, "APPROVED", true, null
+            ));
+
+            ProductResponse response = productService.createProduct(request);
+
+            assertNotNull(response);
+            assertEquals("APPROVED", response.approvalStatus());
+            assertTrue(response.isActive());
+            verify(productRepository).save(any(Product.class));
         }
     }
 }
