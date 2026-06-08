@@ -10,7 +10,9 @@ import com.ramsai.kitchen.models.entities.*;
 import com.ramsai.kitchen.repositories.AIChatSessionRepository;
 import com.ramsai.kitchen.repositories.AIMessageRepository;
 import com.ramsai.kitchen.repositories.OrderRepository;
+import com.ramsai.kitchen.repositories.ProductRepository;
 import com.ramsai.kitchen.repositories.ReviewRepository;
+import com.ramsai.kitchen.repositories.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -38,6 +40,8 @@ class AIChatServiceTest {
     @Mock private AIMessageRepository messageRepository;
     @Mock private OrderRepository orderRepository;
     @Mock private ReviewRepository reviewRepository;
+    @Mock private ProductRepository productRepository;
+    @Mock private UserRepository userRepository;
     @Mock private ProductService productService;
     @Mock private AIChatMapper chatMapper;
     @Mock private GeminiConfig geminiConfig;
@@ -56,6 +60,56 @@ class AIChatServiceTest {
             AIMessage m = inv.getArgument(0);
             return new AIMessageResponse(m.getId(), m.getSenderType(), m.getContent(), m.getTimestamp());
         });
+    }
+
+    @Test
+    void getUserSessions_returnsSessionsForCurrentUser() {
+        User chef = new User();
+        chef.setId(1L);
+        chef.setUsername("gordon");
+
+        Authentication authentication = mock(Authentication.class);
+        when(authentication.getPrincipal()).thenReturn(chef);
+        SecurityContext securityContext = mock(SecurityContext.class);
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+
+        when(sessionRepository.findAllByUserIdOrderByStartedAtDesc(1L)).thenReturn(List.of(session));
+        when(chatMapper.toSessionResponse(session))
+                .thenReturn(new AIChatSessionResponse(7L, null, null, List.of()));
+
+        try (var holder = mockStatic(SecurityContextHolder.class)) {
+            holder.when(SecurityContextHolder::getContext).thenReturn(securityContext);
+
+            List<AIChatSessionResponse> sessions = aiChatService.getUserSessions();
+
+            assertEquals(1, sessions.size());
+            assertEquals(7L, sessions.get(0).id());
+        }
+    }
+
+    @Test
+    void getSession_returnsPopulatedSessionResponse() {
+        when(sessionRepository.findById(7L)).thenReturn(Optional.of(session));
+        when(chatMapper.toSessionResponse(session))
+                .thenReturn(new AIChatSessionResponse(7L, null, null, List.of()));
+
+        AIChatSessionResponse response = aiChatService.getSession(7L);
+
+        assertEquals(7L, response.id());
+        verify(sessionRepository).findById(7L);
+    }
+
+    @Test
+    void getSession_throwsWhenNotFound() {
+        when(sessionRepository.findById(99L)).thenReturn(Optional.empty());
+        assertThrows(RuntimeException.class, () -> aiChatService.getSession(99L));
+    }
+
+    @Test
+    void deleteSession_callsRepositoryDelete() {
+        when(sessionRepository.findById(7L)).thenReturn(Optional.of(session));
+        aiChatService.deleteSession(7L);
+        verify(sessionRepository).delete(session);
     }
 
     // ---------------------------------------------------------------------
