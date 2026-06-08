@@ -518,6 +518,178 @@
             justify-content: flex-end;
             gap: 10px;
         }
+
+        /* ===== User Story 10: Sales Intelligence ===== */
+        .analytics-section {
+            background: #ffffff;
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            box-shadow: var(--card-shadow);
+            padding: 24px;
+            margin-bottom: 32px;
+        }
+        .analytics-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 16px;
+            flex-wrap: wrap;
+            margin-bottom: 18px;
+        }
+        .analytics-header h3 {
+            font-size: 1.4rem;
+            font-weight: 800;
+            color: var(--text-dark);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 4px;
+        }
+        .analytics-header h3 i { color: #4f46e5; }
+        .analytics-header p {
+            color: var(--text-gray);
+            font-size: 0.9rem;
+            margin: 0;
+            max-width: 640px;
+        }
+        .analytics-totals { display: flex; gap: 12px; flex-wrap: wrap; }
+        .kpi {
+            background: #f5f3ff;
+            border: 1px solid #e0e7ff;
+            border-radius: 12px;
+            padding: 10px 16px;
+            min-width: 112px;
+            text-align: center;
+        }
+        .kpi .kpi-value { font-size: 1.4rem; font-weight: 800; color: #4338ca; line-height: 1.15; }
+        .kpi .kpi-label {
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-gray);
+        }
+        .charts-scroller {
+            display: flex;
+            gap: 18px;
+            overflow-x: auto;
+            padding: 6px 4px 16px;
+            scroll-snap-type: x mandatory;
+            scroll-behavior: smooth;
+        }
+        .charts-scroller::-webkit-scrollbar { height: 8px; }
+        .charts-scroller::-webkit-scrollbar-thumb { background: #c7d2fe; border-radius: 8px; }
+        .chart-card {
+            flex: 0 0 auto;
+            width: 380px;
+            max-width: 85vw;
+            min-height: 320px;
+            background: #ffffff;
+            border: 1px solid var(--border-color);
+            border-radius: 14px;
+            padding: 16px;
+            scroll-snap-align: start;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        .chart-card.ai-generated {
+            border-color: #818cf8;
+            box-shadow: 0 0 0 2px rgba(129, 140, 248, 0.25);
+        }
+        .chart-card h4 {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: var(--text-dark);
+            margin: 0 0 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .chart-card h4 .ai-tag {
+            font-size: 0.62rem;
+            background: var(--primary-gradient);
+            color: #fff;
+            padding: 2px 8px;
+            border-radius: 9999px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+        .chart-card .chart-canvas-wrap { position: relative; flex: 1; min-height: 240px; }
+        .chart-card.table-card .table-wrap { max-height: 264px; margin-top: 0; }
+        .analytics-ai { margin-top: 8px; }
+        .analytics-ask { display: flex; gap: 10px; }
+        .analytics-ask input {
+            flex: 1;
+            padding: 12px 16px;
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            font-family: inherit;
+            font-size: 0.95rem;
+        }
+        .analytics-ask input:focus {
+            outline: none;
+            border-color: var(--input-focus);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+        }
+        .analytics-ask button {
+            background: var(--primary-gradient);
+            color: #fff;
+            border: none;
+            border-radius: 10px;
+            padding: 0 20px;
+            font-weight: 700;
+            cursor: pointer;
+            white-space: nowrap;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .analytics-ask button:disabled { opacity: 0.6; cursor: not-allowed; }
+        .analytics-suggestions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+        .suggestion-chip {
+            background: #eef2ff;
+            color: #4338ca;
+            border: 1px solid #e0e7ff;
+            border-radius: 9999px;
+            padding: 6px 14px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+        .suggestion-chip:hover { background: #e0e7ff; }
+        .analytics-answer {
+            margin-top: 16px;
+            background: #f8fafc;
+            border: 1px solid var(--border-color);
+            border-left: 4px solid #4f46e5;
+            border-radius: 10px;
+            padding: 14px 16px;
+            color: var(--text-dark);
+            font-size: 0.92rem;
+            line-height: 1.5;
+        }
+        .analytics-answer .ai-label {
+            font-weight: 700;
+            color: #4338ca;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 6px;
+        }
+        .analytics-empty {
+            color: var(--text-gray);
+            font-size: 0.9rem;
+            padding: 28px;
+            text-align: center;
+            width: 100%;
+        }
+        .hidden { display: none !important; }
+        @media (max-width: 480px) {
+            .chart-card { width: 300px; }
+        }
     </style>
 </head>
 <body>
@@ -532,6 +704,31 @@
         <p>Comprehensive control over your restaurant's products, ingredients, and stock levels.</p>
         <div class="underline"></div>
     </div>
+
+    <!-- User Story 10: Sales Reporting — visual dashboard + AI analyst -->
+    <section class="analytics-section" id="salesIntel">
+        <div class="analytics-header">
+            <div>
+                <h3><i class="fas fa-chart-line"></i> Sales Intelligence</h3>
+                <p>Live report of products purchased by customers — grouped by category, sorted by popularity, with average ratings. Scroll sideways through the visuals, or ask the AI analyst a question (it can also generate charts on request).</p>
+            </div>
+            <div class="analytics-totals" id="analyticsTotals"></div>
+        </div>
+
+        <div class="charts-scroller" id="chartsScroller">
+            <div class="analytics-empty" id="chartsLoading">Loading sales report…</div>
+        </div>
+
+        <div class="analytics-ai">
+            <form id="analyticsAskForm" class="analytics-ask">
+                <input id="analyticsQuestion" type="text" autocomplete="off"
+                       placeholder="Ask about your data — e.g. &quot;which category makes the most revenue?&quot; or &quot;show a pie chart of revenue by category&quot;">
+                <button type="submit" id="analyticsAskBtn"><i class="fas fa-paper-plane"></i> Ask</button>
+            </form>
+            <div class="analytics-suggestions" id="analyticsSuggestions"></div>
+            <div class="analytics-answer hidden" id="analyticsAnswer"></div>
+        </div>
+    </section>
 
     <div class="manager-grid">
         <!-- 1. Create Product -->
@@ -793,9 +990,11 @@
 
 <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1.6.1/dist/sockjs.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@stomp/stompjs@7.0.0/bundles/stomp.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
 <script src="js/realtime.js"></script>
 <script src="js/auth.js"></script>
 <script src="js/manager.js"></script>
+<script src="js/manager-analytics.js"></script>
 </body>
 </html>
 
