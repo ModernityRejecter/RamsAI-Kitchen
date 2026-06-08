@@ -219,7 +219,6 @@
                     </a>
                 </div>
 
-                <div id="verifyActionContainer"></div>
             </div>
         </aside>
 
@@ -235,12 +234,6 @@
                     <div class="detail-item">
                         <span class="detail-label">Username</span>
                         <span class="detail-value" id="dispUsername">---</span>
-                    </div>
-                    <div class="detail-item">
-                        <span class="detail-label">Email Status</span>
-                        <div id="statusPillContainer">
-                            <span class="status-pill unverified"><i class="fas fa-clock"></i> Checking...</span>
-                        </div>
                     </div>
                     <div class="detail-item">
                         <span class="detail-label">Email Address</span>
@@ -327,32 +320,8 @@
                     year: 'numeric', month: 'long', day: 'numeric'
                 });
                 
-                // Verification Status
-                const pillContainer = document.getElementById('statusPillContainer');
-                const actionContainer = document.getElementById('verifyActionContainer');
-                
-                if (user.isEmailVerified) {
-                    pillContainer.innerHTML = `<span class="status-pill verified"><i class="fas fa-check-circle"></i> Verified</span>`;
-                    actionContainer.innerHTML = "";
-                } else {
-                    pillContainer.innerHTML = `<span class="status-pill unverified"><i class="fas fa-exclamation-circle"></i> Unverified</span>`;
-                    actionContainer.innerHTML = `
-                        <button onclick="requestVerification()" class="action-btn btn-verify">
-                            <i class="fas fa-paper-plane"></i> Verify Email
-                        </button>`;
-                }
             } else {
                 window.location.href = 'login.html';
-            }
-        }
-
-        async function requestVerification() {
-            const response = await authenticatedFetch('/api/v1/user/verify-email/request', { method: 'POST' });
-            if (response.ok) {
-                alert('Verification email sent! Check the application console for the link.');
-            } else {
-                const res = await response.json();
-                alert('Error: ' + res.message);
             }
         }
 
