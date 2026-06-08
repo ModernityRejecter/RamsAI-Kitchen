@@ -92,7 +92,7 @@ public class CartService {
     }
 
     @Transactional
-    public OrderResponse checkout(Long customerId, Long tableId) {
+    public OrderResponse checkout(Long customerId, Long tableId, String notes) {
         Order cart = orderRepository.findByCustomerIdAndStatus(customerId, OrderStatus.DRAFT)
                 .orElseThrow(() -> new RuntimeException("No active cart found"));
 
@@ -119,6 +119,7 @@ public class CartService {
         cart.setTable(table);
         cart.setStatus(OrderStatus.RECEIVED);
         cart.setPlacedAt(LocalDateTime.now());
+        cart.setNotes(notes);
         orderRepository.save(cart);
         log.info("Order {} checked out for table {}", cart.getId(), tableId);
         return orderMapper.toResponse(cart);

@@ -101,12 +101,16 @@ function renderAll() {
 function renderCard(order) {
     const items = Array.isArray(order.items) ? order.items : [];
     const table = order.tableNumber != null ? `<span class="kds-table">Table ${order.tableNumber}</span>` : '';
+    const orderNote = order.notes
+        ? `<div class="kds-note order-level-note"><i class="fas fa-triangle-exclamation"></i><strong>Order Note:</strong> <span>${escapeHtml(order.notes)}</span></div>`
+        : '';
     return `
         <article class="kds-card" data-order-id="${order.id}">
             <div class="kds-card-head">
                 <div><span class="kds-order-id">#${order.id}</span>${table}</div>
                 <span class="kds-elapsed" data-created="${order.placedAt || order.createdAt}">${formatElapsed(order.placedAt || order.createdAt)}</span>
             </div>
+            ${orderNote}
             <ul class="kds-items">
                 ${items.map(renderItem).join('') || '<li class="kds-item">No items.</li>'}
             </ul>

@@ -16,5 +16,6 @@ public record OrderResponse(
     LocalDateTime createdAt,
     LocalDateTime updatedAt,
     LocalDateTime placedAt,
+    String notes,
     List<OrderItemResponse> items
 ) {}

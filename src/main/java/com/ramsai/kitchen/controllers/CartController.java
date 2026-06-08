@@ -56,8 +56,9 @@ public class CartController {
     @PostMapping("/checkout")
     public ResponseEntity<Map<String, Object>> checkout(
             @AuthenticationPrincipal User user,
-            @RequestParam Long tableId) {
-        OrderResponse order = cartService.checkout(user.getId(), tableId);
+            @RequestParam("tableId") Long tableId,
+            @RequestParam(value = "notes", required = false) String notes) {
+        OrderResponse order = cartService.checkout(user.getId(), tableId, notes);
         kitchenBroadcastService.broadcastOrderUpdate(order);
         return ResponseEntity.ok(Map.of(
                 "message", "Checkout successful. Your order is being prepared!"

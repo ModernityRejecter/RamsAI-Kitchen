@@ -130,6 +130,7 @@ async function removeFromCart(itemId) {
 async function checkout() {
     const token = localStorage.getItem('token') || sessionStorage.getItem('token');
     const tableId = document.getElementById('tableId').value;
+    const notes = document.getElementById('sideCartNotes').value;
 
     if (!tableId) {
         alert('Please select a table before checking out.');
@@ -137,7 +138,12 @@ async function checkout() {
     }
 
     try {
-        const response = await fetch(`/api/v1/cart/checkout?tableId=${tableId}`, {
+        let url = `/api/v1/cart/checkout?tableId=${tableId}`;
+        if (notes) {
+            url += `&notes=${encodeURIComponent(notes)}`;
+        }
+
+        const response = await fetch(url, {
             method: 'POST',
             headers: { 'Authorization': `Bearer ${token}` }
         });
