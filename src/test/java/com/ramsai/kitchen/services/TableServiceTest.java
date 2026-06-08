@@ -1,5 +1,6 @@
 package com.ramsai.kitchen.services;
 
+import com.ramsai.kitchen.models.entities.Order;
 import com.ramsai.kitchen.models.entities.RestaurantTable;
 import com.ramsai.kitchen.repositories.OrderRepository;
 import com.ramsai.kitchen.repositories.RestaurantTableRepository;
@@ -11,7 +12,9 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.time.LocalDateTime;
 import java.util.Optional;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -96,5 +99,25 @@ class TableServiceTest {
         assertNotNull(response);
         assertEquals(com.ramsai.kitchen.enums.TableStatus.FREE, table.getStatus());
         verify(tableRepository).saveAll(any());
+    }
+
+    @Test
+    void getAllTablesWithLastOrderTime_IncludesLastOrderTimeFromGroup() {
+        table.setTableNumber(5);
+        table.setStatus(com.ramsai.kitchen.enums.TableStatus.OCCUPIED);
+        table.setOccupiedAt(LocalDateTime.now().minusMinutes(20));
+        
+        Order order = new Order();
+        LocalDateTime now = LocalDateTime.now();
+        order.setPlacedAt(now.minusMinutes(10));
+        
+        when(tableRepository.findAll()).thenReturn(List.of(table));
+        when(orderRepository.findAllByTableNumberOrderByPlacedAtDesc(5)).thenReturn(List.of(order));
+        
+        List<TableResponse> responses = tableService.getAllTablesWithLastOrderTime();
+        
+        assertEquals(1, responses.size());
+        assertEquals(order.getPlacedAt(), responses.get(0).lastOrderTime());
+        verify(orderRepository).findAllByTableNumberOrderByPlacedAtDesc(5);
     }
 }

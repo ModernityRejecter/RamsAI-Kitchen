@@ -249,6 +249,13 @@
             color: white;
             font-weight: 600;
         }
+        .table-list-item .time-elapsed {
+            font-size: 0.7rem;
+            color: #94a3b8;
+            margin-left: auto;
+            margin-right: 10px;
+            font-weight: 500;
+        }
         .status-badge.FREE { background: #2ecc71; }
         .status-badge.OCCUPIED { background: #e74c3c; }
         .status-badge.SELF { background: #3498db; }
@@ -428,6 +435,10 @@
                 <div class="detail-row">
                     <span class="detail-label">Capacity:</span>
                     <span class="detail-value" id="detailCapacity">-</span>
+                </div>
+                <div class="detail-row" id="lastOrderRow" style="display:none;">
+                    <span class="detail-label">Last Order:</span>
+                    <span class="detail-value" id="detailLastOrder">-</span>
                 </div>
 
                 <div class="action-btns">
