@@ -56,9 +56,16 @@ jobs:
           npm install --silent --no-audit --prefer-offline --global "@google/gemini-cli@${GEMINI_CLI_VERSION:-latest}"
           gemini extensions install 'https://github.com/gemini-cli-extensions/code-review' --consent
 
+      # The review runs on a Gemini API free-tier key, whose generate_content quota
+      # (~20 req/day on gemini-3.5-flash) is shared across every PR in a day and is
+      # routinely exhausted, plus the model returns transient 503s under load. Those
+      # are account-level / upstream conditions, not problems with the PR. Keep this
+      # advisory review from turning the PR check red: continue-on-error lets the job
+      # succeed even when the CLI exits 1, while still posting comments when quota allows.
       - name: 'Run Gemini pull request review'
         uses: 'google-github-actions/run-gemini-cli@v0' # ratchet:exclude
         id: 'gemini_pr_review'
+        continue-on-error: true
         env:
           GITHUB_TOKEN: '${{ steps.mint_identity_token.outputs.token || secrets.GITHUB_TOKEN || github.token }}'
           ISSUE_TITLE: '${{ github.event.pull_request.title || github.event.issue.title }}'
