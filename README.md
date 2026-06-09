@@ -2,6 +2,7 @@
 
 **A real-time, AI-assisted restaurant management system** — from the customer's first tap on the digital menu to the manager's sales dashboard, all in one Spring Boot application.
 
+<<<<<<< Updated upstream
 ![CI](https://github.com/ModernityRejecter/RamsAI-Kitchen/actions/workflows/ci.yml/badge.svg)
 ![CodeQL](https://github.com/ModernityRejecter/RamsAI-Kitchen/actions/workflows/codeql.yml/badge.svg)
 ![Java](https://img.shields.io/badge/Java-17-orange)
@@ -157,6 +158,13 @@ e.g. `MANAGER`-only admin operations, `CHEF | MANAGER` for the kitchen, and
 ---
 
 ## Quick start
+=======
+## Demo Video
+
+We have a demo! Check it out: https://youtu.be/_323vWkLjic
+
+## Quick Start Tutorial
+>>>>>>> Stashed changes
 
 ### Prerequisites
 
