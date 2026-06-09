@@ -5,6 +5,7 @@ import com.ramsai.kitchen.enums.OrderStatus;
 import com.ramsai.kitchen.models.dtos.*;
 import com.ramsai.kitchen.models.entities.Order;
 import com.ramsai.kitchen.models.entities.OrderItem;
+import com.ramsai.kitchen.models.entities.Product;
 import com.ramsai.kitchen.repositories.OrderItemRepository;
 import com.ramsai.kitchen.repositories.OrderRepository;
 import com.ramsai.kitchen.repositories.ReviewRepository;
@@ -124,9 +125,95 @@ public class ManagerAnalyticsService {
         return series;
     }
 
+    // Fine-grained slices the model needs to chart "anything": every product and
+    // category as its own daily units/revenue series (aligned to a shared date axis),
+    // plus day-of-week and hour-of-day totals. Built from the same window of orders
+    // that buildDailySales() uses, so no extra entities are loaded beyond one fetch.
+    private String buildGranularContext() {
+        LocalDate start = LocalDate.now().minusDays(DAILY_WINDOW_DAYS - 1L);
+        List<Order> orders = orderRepository.findAllByCreatedAtAfter(start.atStartOfDay());
+
+        List<LocalDate> axis = new ArrayList<>();
+        Map<LocalDate, Integer> dayIndex = new HashMap<>();
+        for (int i = 0; i < DAILY_WINDOW_DAYS; i++) {
+            LocalDate day = start.plusDays(i);
+            axis.add(day);
+            dayIndex.put(day, i);
+        }
+
+        Map<String, long[]> productUnits = new TreeMap<>();
+        Map<String, double[]> productRevenue = new TreeMap<>();
+        Map<String, long[]> categoryUnits = new TreeMap<>();
+        Map<String, double[]> categoryRevenue = new TreeMap<>();
+        String[] dowNames = {"Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"};
+        long[] dowOrders = new long[7];
+        long[] dowUnits = new long[7];
+        double[] dowRevenue = new double[7];
+        long[] hourOrders = new long[24];
+        long[] hourUnits = new long[24];
+        double[] hourRevenue = new double[24];
+
+        for (Order o : orders) {
+            if (o.getCreatedAt() == null || NON_SALE_STATUSES.contains(o.getStatus())) continue;
+            Integer di = dayIndex.get(o.getCreatedAt().toLocalDate());
+            int dow = o.getCreatedAt().getDayOfWeek().getValue() - 1;
+            int hour = o.getCreatedAt().getHour();
+            dowOrders[dow]++;
+            hourOrders[hour]++;
+            if (o.getItems() == null) continue;
+            for (OrderItem item : o.getItems()) {
+                long qty = item.getQuantity() == null ? 0L : item.getQuantity();
+                double revenue = (item.getUnitPrice() == null ? 0.0 : item.getUnitPrice().doubleValue()) * qty;
+                dowUnits[dow] += qty;
+                dowRevenue[dow] += revenue;
+                hourUnits[hour] += qty;
+                hourRevenue[hour] += revenue;
+                Product p = item.getProduct();
+                if (p == null || di == null) continue;
+                String productName = p.getName();
+                String categoryName = p.getCategory() != null ? p.getCategory().getName() : "Uncategorized";
+                productUnits.computeIfAbsent(productName, k -> new long[DAILY_WINDOW_DAYS])[di] += qty;
+                productRevenue.computeIfAbsent(productName, k -> new double[DAILY_WINDOW_DAYS])[di] += revenue;
+                categoryUnits.computeIfAbsent(categoryName, k -> new long[DAILY_WINDOW_DAYS])[di] += qty;
+                categoryRevenue.computeIfAbsent(categoryName, k -> new double[DAILY_WINDOW_DAYS])[di] += revenue;
+            }
+        }
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("\nGRANULAR TIME-SERIES (every array aligns to this date axis, oldest first):\n");
+        sb.append("Dates: ").append(axis.stream().map(LocalDate::toString).collect(Collectors.joining(", "))).append("\n");
+
+        if (!productUnits.isEmpty()) {
+            sb.append("\nUnits sold per day, per product (aligned to Dates):\n");
+            productUnits.forEach((name, arr) -> sb.append("- ").append(name).append(": ").append(joinLongs(arr)).append("\n"));
+            sb.append("\nRevenue ($) per day, per product (aligned to Dates):\n");
+            productRevenue.forEach((name, arr) -> sb.append("- ").append(name).append(": ").append(joinMoney(arr)).append("\n"));
+            sb.append("\nUnits sold per day, per category (aligned to Dates):\n");
+            categoryUnits.forEach((name, arr) -> sb.append("- ").append(name).append(": ").append(joinLongs(arr)).append("\n"));
+            sb.append("\nRevenue ($) per day, per category (aligned to Dates):\n");
+            categoryRevenue.forEach((name, arr) -> sb.append("- ").append(name).append(": ").append(joinMoney(arr)).append("\n"));
+        }
+
+        sb.append("\nTotals by day-of-week (orders, units, revenue $):\n");
+        for (int i = 0; i < 7; i++) {
+            sb.append("- ").append(dowNames[i]).append(": ")
+              .append(dowOrders[i]).append(" orders, ")
+              .append(dowUnits[i]).append(" units, $").append(money(dowRevenue[i])).append("\n");
+        }
+
+        sb.append("\nTotals by hour-of-day (orders, units, revenue $):\n");
+        for (int h = 0; h < 24; h++) {
+            if (hourOrders[h] == 0) continue;
+            sb.append("- ").append(String.format("%02d:00", h)).append(": ")
+              .append(hourOrders[h]).append(" orders, ")
+              .append(hourUnits[h]).append(" units, $").append(money(hourRevenue[h])).append("\n");
+        }
+        return sb.toString();
+    }
+
     @Transactional(readOnly = true)
     public AnalyticsAnswerResponse ask(String question) {
-        String context = buildContext(getSalesReport());
+        String context = buildContext(getSalesReport()) + buildGranularContext();
         try {
             return callGemini(question, context);
         } catch (Exception e) {
@@ -174,19 +261,34 @@ public class ManagerAnalyticsService {
 
         Map<String, Object> systemInstruction = new HashMap<>();
         systemInstruction.put("parts", Collections.singletonList(Collections.singletonMap("text",
-                "You are a restaurant Business-Intelligence analyst assisting the manager. " +
-                "Use the sales report data below to answer questions about product popularity, revenue, " +
-                "categories, review ratings and day-by-day sales trends. The data includes a daily breakdown " +
-                "for the last " + DAILY_WINDOW_DAYS + " days, so you CAN build time-series charts such as revenue, " +
-                "units or orders per day. Use a 'line' chart for trends over time, and honour narrower windows " +
-                "(e.g. 'last 7/14/20 days') by plotting only the most recent matching days in order. " +
-                "You may also reason about figures derivable from the data (best/worst performers, averages, " +
-                "comparisons, revenue share, growth, busiest days, etc.) even when not listed explicitly. " +
-                "Keep written answers concise (a few sentences) and grounded in the numbers. " +
-                "When the manager asks you to draw, plot, show, visualize or generate a chart/graph, " +
-                "ALWAYS CALL the render_chart function with the requested chart type and the exact data to plot " +
-                "(labels in chronological or ranked order, with matching numeric values). " +
-                "Pick sensible labels and numeric values straight from the data.\n\n" +
+                "You are a restaurant Business-Intelligence analyst assisting the manager. Answer questions " +
+                "about sales, revenue, product and category performance, review ratings and trends, and DRAW " +
+                "CHARTS on request. Everything you need is in the DATA section, covering the last " +
+                DAILY_WINDOW_DAYS + " days:\n" +
+                "- All-time-in-window totals plus per-category and per-product breakdowns (units, revenue, rating).\n" +
+                "- A shared daily date axis and, aligned to it: overall units/revenue/orders per day; units AND " +
+                "revenue per day for EVERY product; and units AND revenue per day for EVERY category.\n" +
+                "- Totals broken down by day-of-week and by hour-of-day.\n\n" +
+                "So you CAN plot virtually anything grounded in this data, for example: revenue, units or orders " +
+                "over time (overall, for one specific product, or one specific category); several products or " +
+                "categories compared over time (one dataset each, sharing the date labels); a product's or " +
+                "category's share of total sales (pie/doughnut); product or category rankings (bar); ratings by " +
+                "product; average order value; the busiest day-of-week or hour-of-day; best/worst performers; " +
+                "growth between two periods; or the value on a single specific day. Honour narrower windows " +
+                "(e.g. 'last 7/14 days') by using only the most recent matching days, in chronological order.\n\n" +
+                "RULES:\n" +
+                "- Pick the right chart type: 'line' for trends over time, 'bar' for ranking/comparing discrete " +
+                "items, 'pie' or 'doughnut' for share-of-total.\n" +
+                "- To compare multiple products/categories over time, return one dataset per series, all sharing " +
+                "the same date labels. Labels and every dataset's data array MUST be the same length and aligned.\n" +
+                "- Read numbers straight from the DATA; never invent values. If a product/category isn't listed, " +
+                "it had no sales in the window (treat as zero).\n" +
+                "- If the manager asks for something the data does NOT contain (profit, cost, margins, individual " +
+                "customers, payment methods, ingredient/stock levels), briefly say it isn't available in the sales " +
+                "data instead of guessing.\n" +
+                "- Keep written answers concise (a few sentences) and grounded in the numbers.\n" +
+                "- Whenever the manager asks you to draw, plot, show, visualise, graph or chart something, ALWAYS " +
+                "CALL the render_chart function with the chosen chart type and the exact data to plot.\n\n" +
                 "DATA:\n" + context)));
         requestBody.put("system_instruction", systemInstruction);
 
@@ -214,12 +316,18 @@ public class ManagerAnalyticsService {
         Map<String, Object> labels = new HashMap<>();
         labels.put("type", "ARRAY");
         labels.put("items", stringType);
+        labels.put("description", "Shared x-axis labels: dates (YYYY-MM-DD) for time series, or product/category " +
+                "names for rankings and shares. Must have the same length and order as every dataset's data array.");
 
+        Map<String, Object> seriesLabel = new HashMap<>();
+        seriesLabel.put("type", "STRING");
+        seriesLabel.put("description", "Series name shown in the legend (e.g. the product, category or metric).");
         Map<String, Object> datasetProps = new HashMap<>();
-        datasetProps.put("label", stringType);
+        datasetProps.put("label", seriesLabel);
         Map<String, Object> dataArray = new HashMap<>();
         dataArray.put("type", "ARRAY");
         dataArray.put("items", numberType);
+        dataArray.put("description", "Numeric values aligned 1:1 with the top-level labels array (same length and order).");
         datasetProps.put("data", dataArray);
 
         Map<String, Object> datasetObject = new HashMap<>();
@@ -230,14 +338,22 @@ public class ManagerAnalyticsService {
         Map<String, Object> datasets = new HashMap<>();
         datasets.put("type", "ARRAY");
         datasets.put("items", datasetObject);
+        datasets.put("description", "One entry per series. Use several datasets (sharing the same labels) to " +
+                "compare multiple products or categories on one chart.");
 
         Map<String, Object> chartType = new HashMap<>();
         chartType.put("type", "STRING");
         chartType.put("enum", List.of("bar", "line", "pie", "doughnut", "radar", "polarArea"));
+        chartType.put("description", "Chart type: 'line' for trends over time, 'bar' for ranking/comparing items, " +
+                "'pie' or 'doughnut' for share-of-total.");
+
+        Map<String, Object> title = new HashMap<>();
+        title.put("type", "STRING");
+        title.put("description", "Concise, human-readable chart title.");
 
         Map<String, Object> properties = new HashMap<>();
         properties.put("type", chartType);
-        properties.put("title", stringType);
+        properties.put("title", title);
         properties.put("labels", labels);
         properties.put("datasets", datasets);
 
@@ -347,5 +463,27 @@ public class ManagerAnalyticsService {
 
     private static double round1(double value) {
         return Math.round(value * 10.0) / 10.0;
+    }
+
+    private static String joinLongs(long[] arr) {
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < arr.length; i++) {
+            if (i > 0) sb.append(", ");
+            sb.append(arr[i]);
+        }
+        return sb.toString();
+    }
+
+    private static String joinMoney(double[] arr) {
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < arr.length; i++) {
+            if (i > 0) sb.append(", ");
+            sb.append(money(arr[i]));
+        }
+        return sb.toString();
+    }
+
+    private static String money(double value) {
+        return BigDecimal.valueOf(value).setScale(2, RoundingMode.HALF_UP).toPlainString();
     }
 }

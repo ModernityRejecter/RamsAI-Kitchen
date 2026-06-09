@@ -1,20 +1,28 @@
 package com.ramsai.kitchen.services;
 
 import com.ramsai.kitchen.config.GeminiConfig;
+import com.ramsai.kitchen.enums.OrderStatus;
 import com.ramsai.kitchen.models.dtos.AnalyticsAnswerResponse;
 import com.ramsai.kitchen.models.dtos.CategorySalesReport;
 import com.ramsai.kitchen.models.dtos.SalesReportResponse;
+import com.ramsai.kitchen.models.entities.Category;
+import com.ramsai.kitchen.models.entities.Order;
+import com.ramsai.kitchen.models.entities.OrderItem;
+import com.ramsai.kitchen.models.entities.Product;
 import com.ramsai.kitchen.repositories.OrderItemRepository;
 import com.ramsai.kitchen.repositories.OrderRepository;
 import com.ramsai.kitchen.repositories.ReviewRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.HttpEntity;
 import org.springframework.web.client.RestTemplate;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -122,6 +130,38 @@ class ManagerAnalyticsServiceTest {
         assertEquals(List.of("Pasta", "Dessert"), answer.chart().labels());
         assertEquals("Revenue", answer.chart().datasets().get(0).label());
         assertEquals(List.of(146.0, 16.0), answer.chart().datasets().get(0).data());
+    }
+
+    @Test
+    void ask_feedsPerProductAndPerCategoryDailySeriesToTheModel() {
+        stubSalesData();
+
+        Category pasta = new Category();
+        pasta.setName("Pasta");
+        Product lasagna = Product.builder().id(3L).name("Lasagna").category(pasta).build();
+        OrderItem item = new OrderItem();
+        item.setProduct(lasagna);
+        item.setQuantity(3);
+        item.setUnitPrice(new BigDecimal("12.00"));
+        Order order = new Order();
+        order.setStatus(OrderStatus.SERVED);
+        order.setCreatedAt(LocalDateTime.now());
+        order.setItems(List.of(item));
+        when(orderRepository.findAllByCreatedAtAfter(any())).thenReturn(List.of(order));
+
+        ArgumentCaptor<HttpEntity> captor = ArgumentCaptor.forClass(HttpEntity.class);
+        when(restTemplate.postForObject(any(), captor.capture(), eq(Map.class), anyMap()))
+                .thenReturn(textResponse("ok"));
+
+        service.ask("Plot Lasagna units per day");
+
+        String body = String.valueOf(captor.getValue().getBody());
+        assertTrue(body.contains("Units sold per day, per product"), body);
+        assertTrue(body.contains("Revenue ($) per day, per category"), body);
+        assertTrue(body.contains("Lasagna"), body);
+        assertTrue(body.contains("Pasta"), body);
+        // 3 units of Lasagna on the most recent day must land at the end of the 30-slot series.
+        assertTrue(body.contains("0, 0, 3") || body.matches("(?s).*Lasagna: (0, ){29}3.*"), body);
     }
 
     @Test
