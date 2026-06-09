@@ -10,6 +10,8 @@ import com.ramsai.kitchen.repositories.IngredientRepository;
 import com.ramsai.kitchen.repositories.ProductIngredientRepository;
 import com.ramsai.kitchen.repositories.ProductRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -43,22 +45,13 @@ public class ProductIngredientService {
                 .filter(pi -> pi.getIngredient().getId().equals(request.ingredientId()))
                 .findFirst();
 
+        resetForReapprovalIfNeeded(product);
+
         if (existing.isPresent()) {
             ProductIngredient productIngredient = existing.get();
             productIngredient.setQuantityRequired(request.quantityRequired());
-            
-            product.setApprovalStatus(Product.ApprovalStatus.PENDING);
-            product.setActive(false);
-            product.setRejectionFeedback(null);
-            productRepository.save(product);
-            
             return toResponse(productIngredientRepository.save(productIngredient));
         }
-
-        product.setApprovalStatus(Product.ApprovalStatus.PENDING);
-        product.setActive(false);
-        product.setRejectionFeedback(null);
-        productRepository.save(product);
 
         ProductIngredient productIngredient = ProductIngredient.builder()
                 .product(product)
@@ -93,12 +86,25 @@ public class ProductIngredientService {
                 .orElseThrow(() -> new ResourceNotFoundException("Product ingredient not found with id: " + id));
 
         Product product = productIngredient.getProduct();
+        resetForReapprovalIfNeeded(product);
+
+        productIngredientRepository.delete(productIngredient);
+    }
+
+    private void resetForReapprovalIfNeeded(Product product) {
+        if (isCurrentUserManager()) {
+            return;
+        }
         product.setApprovalStatus(Product.ApprovalStatus.PENDING);
         product.setActive(false);
         product.setRejectionFeedback(null);
         productRepository.save(product);
+    }
 
-        productIngredientRepository.delete(productIngredient);
+    private boolean isCurrentUserManager() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        return authentication != null && authentication.getAuthorities().stream()
+                .anyMatch(a -> "ROLE_MANAGER".equals(a.getAuthority()));
     }
 
     private void ensureProductExists(Long productId) {

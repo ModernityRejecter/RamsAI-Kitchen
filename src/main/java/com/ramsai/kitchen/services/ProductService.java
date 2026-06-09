@@ -15,6 +15,7 @@ import com.ramsai.kitchen.repositories.OrderItemRepository;
 import com.ramsai.kitchen.repositories.ProductRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -81,14 +82,9 @@ public class ProductService {
         Category category = categoryRepository.findById(request.categoryId())
                 .orElseThrow(() -> new ResourceNotFoundException("Category not found with id: " + request.categoryId()));
 
-        Product.ApprovalStatus status = Product.ApprovalStatus.PENDING;
-        boolean isActive = false;
-
-        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        if (principal instanceof User currentUser && currentUser.getRole() == User.UserRole.MANAGER) {
-            status = Product.ApprovalStatus.APPROVED;
-            isActive = true;
-        }
+        // Managers create approved, live products directly; chef-proposed products
+        // (incl. AI suggestions) start PENDING until a manager approves them.
+        boolean isManager = isCurrentUserManager();
 
         Product product = Product.builder()
                 .name(request.name().trim())
@@ -98,12 +94,24 @@ public class ProductService {
                 .isSpecialOffer(Boolean.TRUE.equals(request.isSpecialOffer()))
                 .isDailyRecipe(Boolean.TRUE.equals(request.isDailyRecipe()))
                 .discountPrice(request.discountPrice())
-                .approvalStatus(status)
-                .isActive(isActive)
+                .approvalStatus(isManager ? Product.ApprovalStatus.APPROVED : Product.ApprovalStatus.PENDING)
+                .isActive(isManager)
                 .build();
 
         Product saved = productRepository.save(product);
         return productMapper.toResponse(saved);
+    }
+
+    private boolean isCurrentUserManager() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null) {
+            return false;
+        }
+        if (authentication.getPrincipal() instanceof User user) {
+            return user.getRole() == User.UserRole.MANAGER;
+        }
+        return authentication.getAuthorities().stream()
+                .anyMatch(a -> "ROLE_MANAGER".equals(a.getAuthority()));
     }
 
     @Transactional
