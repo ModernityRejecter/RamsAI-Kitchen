@@ -41,9 +41,31 @@ jobs:
       - name: 'Checkout repository'
         uses: 'actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8' # ratchet:actions/checkout@v6
 
+      # The run-gemini-cli action installs extensions via `echo "Y" | gemini extensions install`,
+      # which answers a single prompt. gemini-cli (>=0.44) added extra third-party-extension and
+      # agent-skills consent prompts, so that install blocks until the job is canceled. Install the
+      # extension here instead with --consent, which acknowledges those prompts non-interactively;
+      # the review step below reuses it from ~/.gemini/extensions (same runner/HOME). The separate
+      # workspace-trust prompt is handled by GEMINI_TRUST_WORKSPACE.
+      - name: 'Pre-install code-review extension (non-interactive)'
+        env:
+          GEMINI_API_KEY: '${{ secrets.GEMINI_API_KEY }}'
+          GEMINI_TRUST_WORKSPACE: 'true'
+          GEMINI_CLI_VERSION: '${{ vars.GEMINI_CLI_VERSION }}'
+        run: |
+          npm install --silent --no-audit --prefer-offline --global "@google/gemini-cli@${GEMINI_CLI_VERSION:-latest}"
+          gemini extensions install 'https://github.com/gemini-cli-extensions/code-review' --consent
+
+      # The review runs on a Gemini API free-tier key, whose generate_content quota
+      # (~20 req/day on gemini-3.5-flash) is shared across every PR in a day and is
+      # routinely exhausted, plus the model returns transient 503s under load. Those
+      # are account-level / upstream conditions, not problems with the PR. Keep this
+      # advisory review from turning the PR check red: continue-on-error lets the job
+      # succeed even when the CLI exits 1, while still posting comments when quota allows.
       - name: 'Run Gemini pull request review'
         uses: 'google-github-actions/run-gemini-cli@v0' # ratchet:exclude
         id: 'gemini_pr_review'
+        continue-on-error: true
         env:
           GITHUB_TOKEN: '${{ steps.mint_identity_token.outputs.token || secrets.GITHUB_TOKEN || github.token }}'
           ISSUE_TITLE: '${{ github.event.pull_request.title || github.event.issue.title }}'
@@ -113,8 +135,4 @@ jobs:
                 ]
               }
             }
-          extensions: |
-            [
-              "https://github.com/gemini-cli-extensions/code-review"
-            ]
           prompt: '/pr-code-review'
