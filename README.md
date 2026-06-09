@@ -84,13 +84,11 @@ flowchart TB
 
     DB[("PostgreSQL<br/>Flyway-managed")]
     GEM["Google Gemini API"]
-    SMTP["SMTP / Email"]
 
     UI -->|HTTPS JSON| REST
     UI <-->|live updates| WS
     SVC --> DB
     SVC -->|AI assistant & analytics| GEM
-    SVC -->|notifications| SMTP
 ```
 
 ### Package layout (`com.ramsai.kitchen`)
